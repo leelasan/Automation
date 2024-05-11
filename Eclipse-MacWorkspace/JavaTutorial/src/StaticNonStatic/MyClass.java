@@ -6,6 +6,10 @@ package StaticNonStatic;
 //- this code explain static method - non static method and what is the difference
 
   public class MyClass {
+	  
+	  int x=10;
+	  static int y=20;
+	  public static int z=30;
       static {
           System.out.println("this is static routine ... ");
 
@@ -17,10 +21,16 @@ package StaticNonStatic;
       public void blabla(){
 
        System.out.println("this is non static method ");
+       System.out.println(x);
+ 	   System.out.println(y);
+ 	   System.out.println(z);
       }
 
       public static void main(String[] args) {
-
+    	  MyClass sv = new MyClass();
+    	  System.out.println(sv.x);
+    	  System.out.println(y);
+    	  System.out.println(z);
          /* ***************************************************************************  
           * 1- in static method you can implement the method inside its class like :  *       
           * you don't have to make an object of this class to implement this method   *      

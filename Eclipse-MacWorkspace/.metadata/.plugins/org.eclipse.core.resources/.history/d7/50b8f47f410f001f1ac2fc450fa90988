@@ -1,0 +1,21 @@
+package InterfacesDemo;
+
+public class Implementation_class implements InterfaceC{
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		
+		InterfaceC ref = new Implementation_class();
+		
+
+	}
+
+	@Override
+	public void my_method() {
+		// TODO Auto-generated method stub
+		System.out.println("this is my own logic...");
+		
+		
+	}
+
+}
