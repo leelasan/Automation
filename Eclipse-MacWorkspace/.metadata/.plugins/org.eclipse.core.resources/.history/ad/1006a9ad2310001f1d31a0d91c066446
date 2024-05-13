@@ -1,0 +1,104 @@
+package CollectionsPackage;
+
+import java.util.Map;
+import java.util.HashMap;
+
+public class Map_Inerface_Demo {
+
+	public static void main(String[] args) {
+		
+		//map_key_value_operations();
+		//map_samekey_diffval_operations();
+		//map_diffkey_nullanddupvalue();
+		map_diffkey_diffva();
+	}
+	
+	//Map Interface and implementing classes are HashMap, HashTable...
+	//Map consists Key Value pairs
+	public static void map_key_value_operations()
+	{
+		//declaration
+		Map<Integer, String> map = new HashMap<Integer, String>();
+		
+		map.put(1,"Leela");
+		map.put(2, "Prasad");
+		map.put(3, "Vakati");
+		
+		//Map index starts from 1 whereas Arrays, List and Set starts with 0
+		//I did not given braces for "for" loop, but it executed only the first statement with the help of for loop till the condition is met
+		//and then went to the next statement
+		
+		for(int i=1; i<=map.size(); i++)
+			System.out.println(map.get(i));
+			
+		System.out.println("**************");
+		
+		//Output
+		//Leela
+		//Prasad
+		//Vakati
+		//**************
+		
+	}
+	
+	public static void map_samekey_diffval_operations()
+	{
+		Map<Integer, String> map = new HashMap<Integer, String>();
+		
+		map.put(1,"AP");
+		map.put(1,"TS");
+		map.put(1,"TN");
+		
+		map.put(2,"PA");
+		map.put(2,"GA");
+		map.put(2,"NJ");
+		
+		//Same/duplicate key will override the previous value and print the last key value pair
+		for (int i=1; i<=map.size(); i++)
+		{
+			System.out.println("Keys are same so, first two are ovverriden "+map.get(i));
+		}
+		
+		//Output
+		//Keys are same so, first two are ovverriden TN
+		//Keys are same so, first two are ovverriden NJ
+	}
+	
+	public static void map_diffkey_nullanddupvalue()
+	{
+		Map<Integer, String> map = new HashMap<Integer, String>();
+		
+		// accepts null and duplicate values
+		map.put(1,"Leela");
+		map.put(2,null);
+		map.put(3,"Leela");
+		
+		for (int i=1;i<=map.size();i++)
+			System.out.println(map.get(i));
+		
+		//output
+		//Leela
+		//null
+		//Leela
+	}
+	
+	public static void map_diffkey_diffva()
+	{
+		Map<Integer, String> map = new HashMap<Integer, String>();
+		
+		// accepts null and duplicate values
+		map.put(0,"Leela");  // map does not take 0. So, output is null
+		map.put(2,null);     // actual value is null print to console
+		map.put(55,"Leela"); // output will be null
+		
+		for (int i=1;i<=map.size();i++)
+			System.out.println(map.get(i));
+		
+		System.out.println(map.get(55)); // output will be leela
+		//meaning that, we have to pass the data of the key to get the value of that pair
+
+		
+	}
+	
+
+}

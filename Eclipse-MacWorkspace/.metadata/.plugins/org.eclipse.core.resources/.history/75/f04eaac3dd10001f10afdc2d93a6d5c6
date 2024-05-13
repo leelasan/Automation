@@ -1,0 +1,12 @@
+package userDefExceptionsDemo;
+
+public class sample extends Exception{
+	
+	sample(String a)
+	{}
+
+	public static void main(String[] args) throws sample {
+		throw new sample("Invalid age exception.....");
+	}
+
+}

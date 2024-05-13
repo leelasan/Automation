@@ -6,7 +6,7 @@ public class MethodOverrideClass {
 		// TODO Auto-generated method stub
 
 	}
-	
-	public abstract void testing();
+	//The abstract method testing in type MethodOverrideClass can only be defined by an abstract class
+	//public abstract void testing();
 
 }

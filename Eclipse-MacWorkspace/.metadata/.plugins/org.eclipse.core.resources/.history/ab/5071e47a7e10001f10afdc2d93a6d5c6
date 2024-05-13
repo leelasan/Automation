@@ -1,0 +1,75 @@
+package Introduction;
+
+public class StringMethods 
+{
+	public static void main(String[] args) 
+	{
+	
+		//String literal -- String constant pool
+		String str = "This is the test string";
+		int i =0 , j =6;
+		
+		//To find length of the string
+		System.out.println("Length of the String Str is "+ str.length());
+		
+		//To find the character value at a given index of the string. index starts from 0
+		System.out.println("Character at the Index "+ i + " of the String Str is "+ str.charAt(i));
+		
+		
+		//print the substring of the string. arguments are starting position and the count including starting index
+		System.out.println("Substring of the String Str is "+ str.substring(i,j));
+		
+		//Appending one string to other with concatenation method
+		System.out.println(str.concat(" This is appended string"));
+		
+		//Checks for the specified character availability in a given string. It's case sensitive.
+		System.out.println(str.contains("S"));
+		
+		//results true or false bases on the string starting with the given argument
+		System.out.println(str.startsWith("This is"));
+		
+		//results true or false bases on the string starting with the given argument
+		System.out.println(str.startsWith("is"));
+		
+		//results true or false bases on the string ending with the given argument
+		System.out.println("Ending with string:"+str.endsWith("string"));
+		
+		String str1 = "Leela", str2 = "Prasad";
+		System.out.println("checkng equals as " +str1.equals(str2));
+		System.out.println(str.indexOf("q"));
+		System.out.println(str.isEmpty());
+		System.out.println(str.replace("h",""));
+		System.out.println(str.substring(1));
+		System.out.println(str.substring(1, 6));
+		
+		char[] chararray = str.toCharArray();
+		for (int k = 0; k<chararray.length; k++) 
+		{
+			System.out.println("Index" + k + chararray[k]);
+		}
+		
+		//Reversing the string
+		char[] chararray1 = str.toCharArray();
+		for (int k1 = chararray1.length-1; k1>=0; k1--) 
+		{
+			System.out.print(chararray1[k1]);
+		}
+		System.out.println("");
+		//Reversing the string with charAt
+		for (int k2 = str.length()-1; k2>=0; k2--) 
+		{
+			System.out.print(str.charAt(k2));
+		}
+		
+		System.out.println("\n"+str.toLowerCase());
+		System.out.println(str.toUpperCase());
+		
+		//Reverse the string with String Buffer
+		//String Object -- Heap
+		StringBuffer sb = new StringBuffer(str);
+		System.out.println(sb.reverse());
+		
+		
+	}
+}
+

@@ -1,0 +1,33 @@
+package CollectionsPackage;
+
+import java.util.HashSet;
+import java.util.Set;
+
+public class Set_Interface_Demo {
+
+	public static void main(String[] args) {
+		
+		set_operations();
+	}
+
+	
+	public static void set_operations()
+	{
+		//with the below statement we imported java.util.set and java.util.HashSet packages
+		Set<Object> set= new HashSet<Object>();
+		
+		set.add("Leela");
+		set.add(123);
+		set.add('V');
+		set.add(null);
+		set.add(1.23);
+		set.add("Leela");
+		set.add(true);
+		
+		for(Object s:set)
+		{
+			System.out.println(s);
+		}
+		
+	}
+}

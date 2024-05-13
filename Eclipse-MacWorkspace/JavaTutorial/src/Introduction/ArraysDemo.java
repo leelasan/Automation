@@ -6,10 +6,24 @@ public class ArraysDemo {
 	public static void main(String[] args) {
 		
 		int[] myIntArray1 = {100, 90};
-		/*myIntArray1 = new int[10];
 		
-		myIntArray1[0] = 100;
-		myIntArray1[1] = 90;*/
+		char[] charArray= {'a','b','c'};
+		
+		System.out.println("0 index: " + charArray[0]);
+		System.out.println("1st index: " + charArray[1]);
+		System.out.println("2nd index: " + charArray[2]);
+		
+		int[] myIntArray5 = new int[2];
+		
+		myIntArray5[0] = 100;
+		myIntArray5[1] = 90;
+		
+		Object[] obj = {10,"Leela", 'L'};
+		
+		System.out.println("0 index: " + obj[0]);
+		System.out.println("1st index: " + obj[1]);
+		System.out.println("2nd index: " + obj[2]);
+		
 		
 		System.out.println("0 index: " + myIntArray1[0]);
 		System.out.println("1st index: " + myIntArray1[1]);
@@ -30,6 +44,7 @@ public class ArraysDemo {
 			System.out.println(myIntArray1[i]);
 		}
 		
+		//method to sort the values within the array
 		Arrays.sort(myIntArray1);
 		
 		for (int i = 0; i < len1; i++){
@@ -37,6 +52,18 @@ public class ArraysDemo {
 		}
 		
 		//System.arraycopy(src, srcPos, dest, destPos, length);
+		
+		String str= "Leela Prasad Vakati";
+		String[] splitStr = str.split(" ");
+		
+		System.out.println(splitStr[0]);
+		System.out.println(splitStr[1]);
+		System.out.println(splitStr[2]);
+		
+		//Integer is a wrapper class
+		Integer in = new Integer(1);
+		System.out.println(in);
+		
 		
 	}
 

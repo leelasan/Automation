@@ -1,0 +1,30 @@
+package CollectionsPackage;
+
+import java.util.Map;
+import java.util.HashMap;
+
+public class Map_Inerface_Demo {
+
+	public static void main(String[] args) {
+		
+		map_operations();
+		
+	}
+	
+	//Map Interface and implementing classes are HashMap, HashTable...
+	//Map consists Key Value pairs
+	public static void map_operations()
+	{
+		//declaration
+		Map<Integer, String> map = new HashMap<Integer, String>();
+		
+		map.put(1,"Leela");
+		map.put(2, "Prasad");
+		map.put(3, "Vakati");
+		
+		//Map index starts from 1 whereas Arrays, List and Set starts with 0
+		for(int i=1; i<=map.size(); i++)
+			System.out.println(map.get(i));
+	}
+
+}

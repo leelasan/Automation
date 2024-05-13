@@ -1,0 +1,20 @@
+package Introduction;
+
+public class StringsDemo {
+
+	public static void main(String[] args) {
+		
+		String str1 = "Hello";
+		String str2 = new String("Welcome");
+		String str3 = "Hello";
+		String str4 = new String("Welcome");
+		
+		str1 = "Leela Prasad";
+		String stradd = str1+str2; 
+		System.out.println("String added: "+ stradd);
+		System.out.println(str1);
+
+
+	}
+
+}
