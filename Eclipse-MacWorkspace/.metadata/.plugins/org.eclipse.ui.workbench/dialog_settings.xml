@@ -17,10 +17,11 @@
 		</list>
 	</section>
 	<section name="NewWizardAction">
-		<item key="NewWizardSelectionPage.STORE_SELECTED_ID" value="org.testng.eclipse.wizards.NewTestNGClassWizard"/>
+		<item key="NewWizardSelectionPage.STORE_SELECTED_ID" value="org.eclipse.m2e.core.wizards.Maven2ProjectWizard"/>
 		<list key="NewWizardSelectionPage.STORE_EXPANDED_CATEGORIES_ID">
 			<item value="org.eclipse.jdt.ui.java"/>
 			<item value="org.eclipse.jdt.ui.java/org.eclipse.jdt.junit"/>
+			<item value="org.eclipse.m2e"/>
 			<item value="org.testng.eclipse"/>
 		</list>
 		<section name="NewWizard.dialogBounds">
@@ -38,17 +39,17 @@
 	<section name="FileSystemImportWizard">
 	</section>
 	<section name="WorkbenchPreferenceDialog.dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="-22"/>
-		<item key="DIALOG_Y_ORIGIN" value="-292"/>
-		<item key="DIALOG_WIDTH" value="619"/>
-		<item key="DIALOG_HEIGHT" value="540"/>
+		<item key="DIALOG_X_ORIGIN" value="0"/>
+		<item key="DIALOG_Y_ORIGIN" value="0"/>
+		<item key="DIALOG_WIDTH" value="885"/>
+		<item key="DIALOG_HEIGHT" value="782"/>
 		<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
 	</section>
 	<section name="PropertyDialog.dialogBounds">
 		<item key="DIALOG_X_ORIGIN" value="207"/>
 		<item key="DIALOG_Y_ORIGIN" value="15"/>
 		<item key="DIALOG_WIDTH" value="1027"/>
-		<item key="DIALOG_HEIGHT" value="594"/>
+		<item key="DIALOG_HEIGHT" value="724"/>
 		<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
 	</section>
 </section>

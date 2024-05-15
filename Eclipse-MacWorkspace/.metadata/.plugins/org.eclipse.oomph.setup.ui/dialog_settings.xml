@@ -13,5 +13,8 @@
 		</section>
 	</section>
 	<section name="org.eclipse.oomph.setup.ui.wizards.SetupWizard$Updater">
+		<item key="DIALOG_WIDTH" value="820"/>
+		<item key="DIALOG_HEIGHT" value="702"/>
+		<item key="DIALOG_FONT_NAME" value="1|.AppleSystemUIFont|11.0|0|COCOA|1|.AppleSystemUIFont"/>
 	</section>
 </section>
