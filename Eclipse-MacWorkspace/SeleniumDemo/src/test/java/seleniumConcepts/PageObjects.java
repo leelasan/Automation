@@ -11,12 +11,14 @@ public class PageObjects extends LaunchBrowser{
 	public static WebElement oHRMuserDdown;
 	public static WebElement oHRMlogOut;
 	
+	
 	public static WebElement HotNuserLink;
 	public static WebElement HotgoBack;
 	
 	public static WebElement redCrAcc;
+	public static WebElement RedFullName;
 
-	
+	public static WebElement CCListBox;
 
 	public static void main(String[] args) {
 
@@ -35,8 +37,8 @@ public class PageObjects extends LaunchBrowser{
 			
 			case "oHRM_Logout":
 				
-				oHRMuserDdown = driver.findElement(By.tagName("span"));
-				oHRMlogOut = driver.findElement(By.tagName("a"));
+				//oHRMuserDdown = driver.findElement(By.tagName("span"));
+				//oHRMlogOut = driver.findElement(By.tagName("a"));
 				break;
 				
 			case "RedFPage":
@@ -52,6 +54,14 @@ public class PageObjects extends LaunchBrowser{
 				HotgoBack = driver.findElement(By.partialLinkText("Go back"));
 				break;
 				
+			case "RedCrAccPage":
+				
+				RedFullName = driver.findElement(By.xpath("//input[starts-with(@name,'name')]"));
+				break;
+				
+			case "CCPage":
+				CCListBox = driver.findElement(By.id("programming-languages"));
+				break;
 		}
 	}
 }

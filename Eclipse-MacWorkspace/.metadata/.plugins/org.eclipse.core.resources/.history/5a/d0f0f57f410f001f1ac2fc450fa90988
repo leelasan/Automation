@@ -1,5 +1,0 @@
-package InterfacesDemo;
-
-public interface InterfaceC extends InterfaceA, InterfaceB{
-
-}
