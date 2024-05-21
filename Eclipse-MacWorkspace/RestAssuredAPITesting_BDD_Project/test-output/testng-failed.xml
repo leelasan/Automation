@@ -3,12 +3,11 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="restsssuredTests.Demo3_PUT_Request">
+      <class name="restsssuredTests.Demo4_MultipleVal_Validation">
         <methods>
-          <include name="postData"/>
-          <include name="putData"/>
+          <include name="Multiple_Val_Validation"/>
         </methods>
-      </class> <!-- restsssuredTests.Demo3_PUT_Request -->
+      </class> <!-- restsssuredTests.Demo4_MultipleVal_Validation -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->

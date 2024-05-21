@@ -3,15 +3,15 @@ package restsssuredTests;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
+import io.restassured.response.Response;
 import io.restassured.RestAssured;
 
 public class Demo3_PUT_Request {
@@ -74,13 +74,16 @@ public class Demo3_PUT_Request {
 		RestAssured.baseURI = "https://api.restful-api.dev/objects";
 		RestAssured.basePath = "/"+id;
 		
-		
-		when()
+		Response res=
+		given()		
+		.when()
 		.delete()
 		.then()
 			.statusCode(200)
-			.log().all();
+			.log().all()
+			.extract().response();
+		
+		String JSONString = res.asString();
+		Assert.assertEquals(JSONString.contains("Object with id = "+id+" has been deleted."),true);
 	}
-
-
 }

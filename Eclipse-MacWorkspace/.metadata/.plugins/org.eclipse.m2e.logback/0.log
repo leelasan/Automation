@@ -3037,3 +3037,88 @@ org.eclipse.core.runtime.CoreException: Launch configuration LaunchChrome refere
 2024-05-20 01:07:39,577 [Worker-151: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
 2024-05-20 01:07:39,578 [Worker-151: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
 2024-05-20 01:07:39,578 [Worker-151: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 09:24:01,760 [Worker-7: Loading available Gradle versions] INFO  o.e.b.c.i.u.g.PublishedGradleVersions - Gradle version information cache is up-to-date. Trying to read.
+2024-05-20 09:38:23,271 [Worker-23: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:38:23,273 [Worker-23: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 09:38:23,277 [Worker-23: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:38:23,277 [Worker-23: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 09:47:39,150 [Worker-26: Launching Demo3_PUT_Request] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:47:39,151 [Worker-26: Launching Demo3_PUT_Request] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 09:47:39,154 [Worker-26: Launching Demo3_PUT_Request] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:47:39,154 [Worker-26: Launching Demo3_PUT_Request] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 09:53:06,491 [Worker-30: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:53:06,491 [Worker-30: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 09:53:06,494 [Worker-30: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 09:53:06,494 [Worker-30: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:35:21,624 [Worker-37: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:35:21,626 [Worker-37: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:35:21,640 [Worker-37: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:35:21,640 [Worker-37: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:49:11,430 [Worker-38: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:49:11,431 [Worker-38: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:49:11,433 [Worker-38: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:49:11,433 [Worker-38: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:49:50,214 [Worker-40: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:49:50,214 [Worker-40: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:49:50,217 [Worker-40: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:49:50,217 [Worker-40: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:54:06,909 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:54:06,909 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:54:06,913 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:54:06,914 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:55:25,645 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:55:25,646 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:55:25,648 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:55:25,648 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:57:35,332 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:57:35,333 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:57:35,335 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:57:35,335 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:57:52,778 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:57:52,778 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:57:52,780 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:57:52,781 [Worker-39: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:59:08,073 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:59:08,073 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:59:08,076 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:59:08,076 [Worker-44: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 14:59:50,722 [Worker-47: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:59:50,722 [Worker-47: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 14:59:50,724 [Worker-47: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 14:59:50,724 [Worker-47: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 16:40:11,457 [Worker-45: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 16:40:11,458 [Worker-45: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 16:40:11,461 [Worker-45: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 16:40:11,461 [Worker-45: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 16:41:39,651 [Worker-48: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 16:41:39,652 [Worker-48: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 16:41:39,654 [Worker-48: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 16:41:39,655 [Worker-48: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 21:33:16,742 [Worker-50: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:33:16,743 [Worker-50: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 21:33:16,746 [Worker-50: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:33:16,746 [Worker-50: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 21:49:26,868 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:49:26,869 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 21:49:26,871 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:49:26,871 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 21:52:30,496 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:52:30,497 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 21:52:30,499 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:52:30,500 [Worker-56: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 21:56:32,530 [Worker-65: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:56:32,530 [Worker-65: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 21:56:32,531 [Worker-65: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 21:56:32,532 [Worker-65: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 22:00:14,319 [Worker-70: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:00:14,319 [Worker-70: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 22:00:14,322 [Worker-70: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:00:14,322 [Worker-70: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 22:01:50,242 [Worker-61: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:01:50,242 [Worker-61: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 22:01:50,244 [Worker-61: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:01:50,244 [Worker-61: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
+2024-05-20 22:02:55,932 [Worker-72: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:02:55,933 [Worker-72: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/main/resources
+2024-05-20 22:02:55,934 [Worker-72: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - Using 'UTF-8' encoding to copy filtered resources.
+2024-05-20 22:02:55,934 [Worker-72: Building] INFO  o.e.m.c.i.embedder.EclipseLogger - skip non existing resourceDirectory /Users/leelasan/git/Automation/Eclipse-MacWorkspace/RestAssuredAPITesting_BDD_Project/src/test/resources
