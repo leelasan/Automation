@@ -3,11 +3,11 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="restsssuredTests.Demo4_MultipleVal_Validation">
+      <class name="serializationAndDeserialization.demo1GETandPOSTWithSerializationandDeserialization">
         <methods>
-          <include name="Multiple_Val_Validation"/>
+          <include name="testGetwithDeSerialization"/>
         </methods>
-      </class> <!-- restsssuredTests.Demo4_MultipleVal_Validation -->
+      </class> <!-- serializationAndDeserialization.demo1GETandPOSTWithSerializationandDeserialization -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->
