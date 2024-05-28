@@ -13,7 +13,7 @@
 		</list>
 	</section>
 	<section name="MavenProjectWizardArchetypePage">
-		<item key="catalog" value="https://repo1.maven.org/maven2/archetype-catalog.xml"/>
+		<item key="catalog" value="All Catalogs"/>
 		<list key="projectNameTemplate">
 			<item value="[artifactId]"/>
 			<item value="[artifactId]-TRUNK"/>
@@ -44,14 +44,10 @@
 	</section>
 	<section name="MavenProjectWizardArtifactPage">
 		<list key="groupId">
-			<item value="Sample"/>
-			<item value="org.sample"/>
 		</list>
 		<list key="name">
 		</list>
 		<list key="artifactId">
-			<item value="SeleniumDemo"/>
-			<item value="SeleniumTraining"/>
 		</list>
 		<list key="projectNameTemplate">
 			<item value="[artifactId]"/>

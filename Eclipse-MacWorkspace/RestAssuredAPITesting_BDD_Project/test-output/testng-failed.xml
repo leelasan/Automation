@@ -3,11 +3,12 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="serializationAndDeserialization.demo1GETandPOSTWithSerializationandDeserialization">
+      <class name="serializationAndDeserialization.Demo2VideoGameAPITestwithSerializationXML">
         <methods>
-          <include name="testGetwithDeSerialization"/>
+          <include name="testPOSTSerializationJSON"/>
+          <include name="testGETDeserializationJSON"/>
         </methods>
-      </class> <!-- serializationAndDeserialization.demo1GETandPOSTWithSerializationandDeserialization -->
+      </class> <!-- serializationAndDeserialization.Demo2VideoGameAPITestwithSerializationXML -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->
