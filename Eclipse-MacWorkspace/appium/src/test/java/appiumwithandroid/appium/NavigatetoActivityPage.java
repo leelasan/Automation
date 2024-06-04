@@ -28,25 +28,7 @@ public class NavigatetoActivityPage extends BaseTest{
 	@Test
 	public void WiFiSettingsName() throws MalformedURLException, URISyntaxException
 	{
-		/*
-		App package and App activity
-		Firstly, check if any devices are running.
-		adb devices command will list the devices currently running 
-		output: emulator-5554	device
 		
-		Go to the activity page in the emulator and then 
-		If you are on MAC use the below command in the terminal to get the package name and activity name
-		adb shell dumpsys window | grep -E 'mCurrentFocus' 
-		Output:
-		mCurrentFocus=Window{1cc573 u0 io.appium.android.apis/io.appium.android.apis.preference.PreferenceDependencies}
-		
-		From the output,
-		data prior to the slash is package name i.e io.appium.android.apis
-		data after the slash is the activity name i.e. io.appium.android.apis.preference.PreferenceDependencies
-		
-		If you are on Windows use the below command to get the package name and the activity name
-		adb shell dumpsys window | find 'mCurrentFocus'
-		*/
 		
 		//Once you have the package name and activity name, you can skip the page traversals
 		//driver.findElement(AppiumBy.accessibilityId("Preference")).click();
@@ -71,7 +53,6 @@ public class NavigatetoActivityPage extends BaseTest{
 		driver.setClipboardText("Leela Prasad");
 		driver.findElement(By.id("android:id/edit")).sendKeys(driver.getClipboardText());
 		driver.findElements(AppiumBy.className("android.widget.Button")).get(1).click();
-		//it is recommended to use AppiumBy.className instead of just By.className
 		
 		
 	}

@@ -3,12 +3,13 @@
 <suite name="Failed suite [Default suite]" guice-stage="DEVELOPMENT">
   <test thread-count="5" name="Default test(failed)">
     <classes>
-      <class name="serializationAndDeserialization.Demo2VideoGameAPITestwithSerializationXML">
+      <class name="restsssuredTests.Demo3_PUT_Request">
         <methods>
-          <include name="testPOSTSerializationJSON"/>
-          <include name="testGETDeserializationJSON"/>
+          <include name="postData"/>
+          <include name="putData"/>
+          <include name="deleteRecord"/>
         </methods>
-      </class> <!-- serializationAndDeserialization.Demo2VideoGameAPITestwithSerializationXML -->
+      </class> <!-- restsssuredTests.Demo3_PUT_Request -->
     </classes>
   </test> <!-- Default test(failed) -->
 </suite> <!-- Failed suite [Default suite] -->

@@ -1,16 +1,21 @@
 package restsssuredTests;
 
 import org.testng.annotations.Test;
+
 import static io.restassured.RestAssured.*;
 //import static io.restassured.matcher.RestAssuredMatchers.*;
 import static org.hamcrest.Matchers.*;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 public class Demo1_GET_Request {
 	
 	// unless you specify the annotation @Test, testng will not execute that method.
 	// to use testng annotations, we need to import the corresponding package org.testng.annotations.Test
 	
 	@Test
-	public void getBarddetails()
+	public void getBarddetails() throws FileNotFoundException
 	{
 		
 		// To use given, when and then sections, we need to import a static package io.restassured.RestAssured.*
@@ -19,7 +24,8 @@ public class Demo1_GET_Request {
 		//No semicolon for any statements or sections prior to that
 		
 		// as we don't have any prerequisite for this GET request, we are not adding any statement to this section
-		given()		
+		given()
+		
 
 		// use double quotes while providing the value in the get request 
 		 .when()

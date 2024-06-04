@@ -50,7 +50,7 @@ public class GS_TC_4_Hybrid extends BaseTest{
 		System.out.println(total);
 		Assert.assertEquals(total, Double.parseDouble((driver.findElement(By.id("com.androidsample.generalstore:id/totalAmountLbl")).getAttribute("text")).substring(1)));
 		//Thread.sleep(3000);
-		LongPressAction(driver.findElement(By.id("com.androidsample.generalstore:id/termsButton")));
+		LongClickAction(driver.findElement(By.id("com.androidsample.generalstore:id/termsButton")));
 		//Thread.sleep(3000);
 		driver.findElement(By.id("android:id/button1")).click();
 		driver.findElement(AppiumBy.className("android.widget.CheckBox")).click();

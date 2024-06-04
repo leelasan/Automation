@@ -51,10 +51,12 @@ public class BaseTest {
 		service.start();
 		
 		UiAutomator2Options options = new UiAutomator2Options();
-		options.setDeviceName("Pixel 3a API 32");
+		options.setDeviceName("Pixel 3a API 32"); //emulator
+		//options.setDeviceName("Android Device"); //real device
+
 		
-		//options.setApp("//Users//leelasan//git//Automation//Eclipse-MacWorkspace//appium//src//test//java//resources//ApiDemos-debug.apk");
-		options.setApp("//Users//leelasan//git//Automation//Eclipse-MacWorkspace//appium//src//test//java//resources//General-Store.apk");
+		options.setApp("//Users//leelasan//git//Automation//Eclipse-MacWorkspace//appium//src//test//java//resources//ApiDemos-debug.apk");
+		//options.setApp("//Users//leelasan//git//Automation//Eclipse-MacWorkspace//appium//src//test//java//resources//General-Store.apk");
 		driver = new AndroidDriver(new URI("http://127.0.0.1:4723").toURL(),options);
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
 	}
@@ -67,7 +69,7 @@ public class BaseTest {
 		service.stop();
 	}
 	
-	public void LongPressAction(WebElement ele)
+	public void LongClickAction(WebElement ele)
 	{
 		((JavascriptExecutor)driver).executeScript("mobile: longClickGesture", 
 				ImmutableMap.of("elementId",((RemoteWebElement)ele).getId(), "duration", 2000));
@@ -97,16 +99,8 @@ public class BaseTest {
 				    "direction", "down",
 				    "percent", 1.0
 				));
-			//boolean avail = driver.findElement(By.xpath("//android.widget.TextView[@content-desc=\"WebView\"]")).getAttribute("text").isEmpty();
-			//System.out.println(avail);
 			
-		/*	if((driver.findElement(AppiumBy.accessibilityId("WebView")).isDisplayed())){
-				
-			}
-			System.out.println("Object not displayed");
-		*/
-		 
-		}while(canScrollMore);
+		}while(canScrollMore && (driver.findElements(AppiumBy.accessibilityId("WebView")).size())<1);
 		
 	}
 	

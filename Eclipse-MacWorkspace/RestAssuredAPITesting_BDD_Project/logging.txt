@@ -1,0 +1,48 @@
+Request method:	POST
+Request URI:	https://api.restful-api.dev/objects
+Proxy:			<none>
+Request params:	<none>
+Query params:	<none>
+Form params:	<none>
+Path params:	<none>
+Headers:		Accept=*/*
+				Content-Type=application/json
+Cookies:		<none>
+Multiparts:		<none>
+Body:
+{
+    "name": "Apple MacBook Pro 16",
+    "data": {
+        "year": 2019,
+        "price": 1849.99,
+        "CPU model": "Intel Core i9",
+        "Hard disk size": "1 TB"
+    }
+}
+HTTP/1.1 200 
+Date: Tue, 04 Jun 2024 01:41:32 GMT
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Vary: Origin
+Vary: Access-Control-Request-Method
+Vary: Access-Control-Request-Headers
+CF-Cache-Status: DYNAMIC
+Report-To: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=pYWKTA2N9W%2Fi4c3xEBlBZdISgUI95ZDbL15r9yEkXhfz1z69iyz9Tsm5ZN8COPZ6nlv%2B7apIpkQEEyNFEplNVkQUNkS5P26MfAG%2FPIHgYa6%2FI0YAIKN1GE0eH5MyOyGkY0AQ6l7A"}],"group":"cf-nel","max_age":604800}
+NEL: {"success_fraction":0,"report_to":"cf-nel","max_age":604800}
+Server: cloudflare
+CF-RAY: 88e4389c489d439d-EWR
+Content-Encoding: gzip
+alt-svc: h3=":443"; ma=86400
+
+{
+    "id": "ff8081818fb998eb018fe0e89e713c90",
+    "name": "Apple MacBook Pro 16",
+    "createdAt": "2024-06-04T01:41:32.401+00:00",
+    "data": {
+        "year": 2019,
+        "price": 1849.99,
+        "CPU model": "Intel Core i9",
+        "Hard disk size": "1 TB"
+    }
+}
