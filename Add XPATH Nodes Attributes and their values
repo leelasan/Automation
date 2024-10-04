@@ -1,0 +1,108 @@
+Sub FindAllXPathsWithValues()
+    Dim xmlDoc As Object
+    Dim nodeSheetName As String
+    Dim attrSheetName As String
+    Dim xmlFilePath As String
+    Dim wsNodeSheet As Worksheet
+    Dim wsAttrSheet As Worksheet
+    Dim xpaths As Collection
+    Dim xpathItem As Variant
+    Dim rowIndexNode As Long
+    Dim rowIndexAttr As Long
+    
+    ' Load the XML document path and sheet names from the Config sheet
+    xmlFilePath = ThisWorkbook.Sheets("Config").Range("B2").Value ' Path to the XML file
+    nodeSheetName = ThisWorkbook.Sheets("Config").Range("B3").Value ' Sheet name for node XPaths
+    attrSheetName = ThisWorkbook.Sheets("Config").Range("B4").Value ' Sheet name for attribute XPaths
+    
+    ' Set worksheet references
+    Set wsNodeSheet = ThisWorkbook.Sheets(nodeSheetName)
+    Set wsAttrSheet = ThisWorkbook.Sheets(attrSheetName)
+    
+    ' Clear the target sheets
+    wsNodeSheet.Cells.Clear
+    wsAttrSheet.Cells.Clear
+    
+    ' Add headers to the sheets
+    wsNodeSheet.Cells(1, 1).Value = "Node XPaths"
+    wsNodeSheet.Cells(1, 2).Value = "Node Value"
+    
+    wsAttrSheet.Cells(1, 1).Value = "Attribute XPaths"
+    wsAttrSheet.Cells(1, 2).Value = "Attribute Name"
+    wsAttrSheet.Cells(1, 3).Value = "Attribute Value"
+    
+    ' Load the XML document
+    Set xmlDoc = CreateObject("MSXML2.DOMDocument")
+    xmlDoc.Load xmlFilePath
+    
+    ' Initialize a collection to store XPath expressions
+    Set xpaths = New Collection
+    
+    ' Generate XPath for all nodes and their attributes
+    GenerateAllXPaths xmlDoc.DocumentElement, "", xpaths
+    
+    ' Write the node and attribute XPaths to the specified sheets
+    rowIndexNode = 2 ' Start from the second row for node sheet
+    rowIndexAttr = 2 ' Start from the second row for attribute sheet
+    
+    For Each xpathItem In xpaths
+        If InStr(xpathItem, "@") > 0 Then ' This is an attribute XPath
+            Dim attrXPath As String, attrName As String, attrValue As String
+            attrXPath = xpathItem
+            attrName = Mid(attrXPath, InStr(attrXPath, "@") + 1, InStr(attrXPath, "=") - InStr(attrXPath, "@") - 1)
+            attrValue = Mid(attrXPath, InStr(attrXPath, "=") + 2, Len(attrXPath) - InStr(attrXPath, "=") - 2)
+            
+            wsAttrSheet.Cells(rowIndexAttr, 1).Value = attrXPath
+            wsAttrSheet.Cells(rowIndexAttr, 2).Value = attrName
+            wsAttrSheet.Cells(rowIndexAttr, 3).Value = attrValue
+            rowIndexAttr = rowIndexAttr + 1
+        Else ' This is a node XPath
+            Dim nodeXPath As String, nodeValue As String
+            nodeXPath = xpathItem
+            nodeValue = GetNodeValue(xmlDoc, nodeXPath)
+            
+            wsNodeSheet.Cells(rowIndexNode, 1).Value = nodeXPath
+            wsNodeSheet.Cells(rowIndexNode, 2).Value = nodeValue
+            rowIndexNode = rowIndexNode + 1
+        End If
+    Next xpathItem
+    
+    ' Message to indicate completion
+    MsgBox "XPath expressions and their values have been written to the specified sheets."
+End Sub
+
+' Recursive function to generate XPath for all nodes and their attributes
+Sub GenerateAllXPaths(node As Object, currentPath As String, ByRef xpaths As Collection)
+    Dim newPath As String
+    Dim childNode As Object
+    Dim i As Integer
+    Dim attribute As Object
+    
+    If node.NodeType = 1 Then ' Check if it's an element node
+        ' Create the new XPath for the current node
+        newPath = currentPath & "/" & node.nodeName
+        
+        ' Add the XPath for the current node to the collection
+        xpaths.Add newPath
+        
+        ' Check for attributes and add their XPaths
+        If node.Attributes.Length > 0 Then
+            For i = 0 To node.Attributes.Length - 1
+                Set attribute = node.Attributes(i)
+                xpaths.Add newPath & "[@" & attribute.nodeName & "='" & attribute.nodeValue & "']"
+            Next i
+        End If
+        
+        ' Recursively process child nodes
+        For Each childNode In node.ChildNodes
+            GenerateAllXPaths childNode, newPath, xpaths
+        Next childNode
+    End If
+End Sub
+
+' Function to get the value of a node based on its XPath
+Function GetNodeValue(xmlDoc As Object, xpath As String) As String
+    On Error Resume Next
+    GetNodeValue = xmlDoc.SelectSingleNode(xpath).Text
+    On Error GoTo 0
+End Function
