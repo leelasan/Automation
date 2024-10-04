@@ -1,0 +1,189 @@
+Option Explicit
+
+' Function to perform Base64 encoding
+Function EncodeBase64(inputStr As String) As String
+    Dim xml As Object
+    Set xml = CreateObject("MSXml2.DOMDocument.3.0")
+    
+    Dim node As Object
+    Set node = xml.createElement("b64")
+    
+    node.DataType = "bin.base64"
+    node.nodeTypedValue = StrConv(inputStr, vbFromUnicode)
+    
+    EncodeBase64 = node.Text
+End Function
+
+' Subroutine to perform token retrieval and send policy requests
+Sub SendPolicyRequests()
+    Dim wsConfig As Worksheet
+    Dim wsPolicyData As Worksheet
+    Dim xmlTemplatePath As String
+    Dim endpointUrl As String
+    Dim tokenUrl As String
+    Dim saveFolder As String
+    Dim userId As String
+    Dim password As String
+    Dim token As String
+    Dim lastRow As Long, i As Long
+    
+    ' Set the worksheet references
+    Set wsConfig = ThisWorkbook.Sheets("Config")
+    Set wsPolicyData = ThisWorkbook.Sheets("PolicyData")
+    
+    ' Read configuration values from the "Config" sheet
+    endpointUrl = wsConfig.Range("B2").Value ' Policy endpoint URL
+    tokenUrl = wsConfig.Range("B3").Value ' Token endpoint URL
+    xmlTemplatePath = wsConfig.Range("B4").Value ' Path to XML template
+    saveFolder = wsConfig.Range("B5").Value ' Folder path to save modified XMLs
+    userId = wsConfig.Range("B6").Value ' User ID for token
+    password = wsConfig.Range("B7").Value ' Password for token
+    
+    ' Get the token using the provided credentials
+    token = GetToken(tokenUrl, userId, password)
+    If token = "" Then
+        MsgBox "Failed to retrieve token. Aborting operation."
+        Exit Sub
+    End If
+
+    ' Get the last row in the "PolicyData" sheet
+    lastRow = wsPolicyData.Cells(wsPolicyData.Rows.Count, 1).End(xlUp).Row
+    
+    ' Get column numbers based on headers in the "PolicyData" sheet
+    Dim policyNumberCol As Integer, policyHolderCol As Integer
+    Dim startDateCol As Integer, endDateCol As Integer
+    Dim transTypeTcCol As Integer, holdingTypeCodeTcCol As Integer
+    
+    policyNumberCol = GetColumnNumberByHeader(wsPolicyData, "PolicyNumber")
+    policyHolderCol = GetColumnNumberByHeader(wsPolicyData, "PolicyHolder")
+    startDateCol = GetColumnNumberByHeader(wsPolicyData, "StartDate")
+    endDateCol = GetColumnNumberByHeader(wsPolicyData, "EndDate")
+    transTypeTcCol = GetColumnNumberByHeader(wsPolicyData, "TransTypeTc")
+    holdingTypeCodeTcCol = GetColumnNumberByHeader(wsPolicyData, "HoldingTypeCodeTc")
+    
+    ' Loop through each row in the "PolicyData" sheet
+    For i = 2 To lastRow
+        Dim policyNumber As String
+        Dim policyHolder As String
+        Dim startDate As String
+        Dim endDate As String
+        Dim transTypeTc As String
+        Dim holdingTypeCodeTc As String
+        Dim xmlDoc As Object
+        Dim updatedXml As String
+        Dim encodedXml As String
+        Dim xmlHttp As Object
+        Dim responseText As String
+        Dim outputFilePath As String
+        
+        ' Read values from the current row using column numbers
+        policyNumber = wsPolicyData.Cells(i, policyNumberCol).Value
+        policyHolder = wsPolicyData.Cells(i, policyHolderCol).Value
+        startDate = wsPolicyData.Cells(i, startDateCol).Value
+        endDate = wsPolicyData.Cells(i, endDateCol).Value
+        transTypeTc = wsPolicyData.Cells(i, transTypeTcCol).Value
+        holdingTypeCodeTc = wsPolicyData.Cells(i, holdingTypeCodeTcCol).Value
+        
+        ' Load the XML template
+        Set xmlDoc = CreateObject("MSXML2.DOMDocument")
+        xmlDoc.Load xmlTemplatePath
+        
+        ' Update the XML nodes with values
+        xmlDoc.SelectSingleNode("//policyNumber").Text = policyNumber
+        xmlDoc.SelectSingleNode("//policyHolder").Text = policyHolder
+        xmlDoc.SelectSingleNode("//startDate").Text = startDate
+        xmlDoc.SelectSingleNode("//endDate").Text = endDate
+        
+        ' Update the 'tc' attributes
+        xmlDoc.SelectSingleNode("//TransType").setAttribute "tc", transTypeTc
+        xmlDoc.SelectSingleNode("//HoldingTypeCode").setAttribute "tc", holdingTypeCodeTc
+        
+        ' Convert updated XML to string
+        updatedXml = xmlDoc.XML
+        
+        ' Save the updated XML to a file
+        outputFilePath = saveFolder & "\" & policyNumber & "_updated.xml"
+        SaveTextToFile outputFilePath, updatedXml
+        MsgBox "Saved updated XML to: " & outputFilePath
+        
+        ' Encode the XML in Base64
+        encodedXml = EncodeBase64(updatedXml)
+        
+        ' Create JSON payload
+        Dim jsonPayload As String
+        jsonPayload = "{""encodedACORDXml"": """ & encodedXml & """}"
+        
+        ' Send HTTP POST request
+        Set xmlHttp = CreateObject("MSXML2.ServerXMLHTTP")
+        xmlHttp.Open "POST", endpointUrl, False
+        xmlHttp.setRequestHeader "Content-Type", "application/json"
+        xmlHttp.setRequestHeader "Authorization", "Bearer " & token
+        xmlHttp.send jsonPayload
+        
+        ' Get the response
+        responseText = xmlHttp.responseText
+        MsgBox "Response: " & responseText
+        
+        ' Cleanup
+        Set xmlDoc = Nothing
+        Set xmlHttp = Nothing
+    Next i
+End Sub
+
+' Function to get the column number by header name
+Function GetColumnNumberByHeader(sheet As Worksheet, header As String) As Integer
+    Dim lastCol As Integer
+    Dim i As Integer
+    lastCol = sheet.Cells(1, sheet.Columns.Count).End(xlToLeft).Column
+    For i = 1 To lastCol
+        If sheet.Cells(1, i).Value = header Then
+            GetColumnNumberByHeader = i
+            Exit Function
+        End If
+    Next i
+    GetColumnNumberByHeader = -1 ' Return -1 if header not found
+End Function
+
+' Function to retrieve the token
+Function GetToken(url As String, userId As String, password As String) As String
+    Dim xmlHttp As Object
+    Dim jsonPayload As String
+    Dim responseText As String
+    Dim token As String
+    
+    ' Create JSON payload for token request
+    jsonPayload = "{""userId"": """ & userId & """, ""password"": """ & password & """}"
+    
+    ' Send HTTP POST request to get the token
+    Set xmlHttp = CreateObject("MSXML2.ServerXMLHTTP")
+    xmlHttp.Open "POST", url, False
+    xmlHttp.setRequestHeader "Content-Type", "application/json"
+    xmlHttp.send jsonPayload
+    
+    ' Get the response
+    responseText = xmlHttp.responseText
+    
+    ' Extract the token from the response (assuming JSON response format)
+    token = ExtractTokenFromResponse(responseText)
+    
+    ' Return the token
+    GetToken = token
+End Function
+
+' Utility function to extract token from JSON response
+Function ExtractTokenFromResponse(response As String) As String
+    On Error Resume Next
+    Dim json As Object
+    Set json = JsonConverter.ParseJson(response)
+    ExtractTokenFromResponse = json("token")
+    On Error GoTo 0
+End Function
+
+' Utility function to save text to a file
+Sub SaveTextToFile(filePath As String, text As String)
+    Dim fileNumber As Integer
+    fileNumber = FreeFile
+    Open filePath For Output As #fileNumber
+    Print #fileNumber, text
+    Close #fileNumber
+End Sub
