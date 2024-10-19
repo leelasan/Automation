@@ -1,0 +1,50 @@
+Sub GenerateAllXPaths(node As Object, currentPath As String, ByRef xpaths As Collection)
+    Dim newPath As String
+    Dim childNode As Object
+    Dim i As Integer
+    Dim attrNode As Object
+    Dim siblingIndex As Integer
+    Dim siblingCount As Integer
+    
+    If node.NodeType = 1 Then ' Check if it's an element node
+        ' Determine the number of sibling nodes with the same name
+        siblingCount = 0
+        For Each childNode In node.ParentNode.ChildNodes
+            If childNode.NodeType = 1 And childNode.nodeName = node.nodeName Then
+                siblingCount = siblingCount + 1
+            End If
+        Next childNode
+        
+        ' Determine the index of the current node among its siblings with the same name
+        siblingIndex = 1
+        For Each childNode In node.ParentNode.ChildNodes
+            If childNode Is node Then Exit For
+            If childNode.NodeType = 1 And childNode.nodeName = node.nodeName Then
+                siblingIndex = siblingIndex + 1
+            End If
+        Next childNode
+        
+        ' If there are multiple siblings with the same name, append the index to the XPath
+        If siblingCount > 1 Then
+            newPath = currentPath & "/" & node.nodeName & "[" & siblingIndex & "]"
+        Else
+            newPath = currentPath & "/" & node.nodeName
+        End If
+        
+        ' Add the XPath for the current node to the collection
+        xpaths.Add newPath
+        
+        ' Check for attributes and add their XPaths
+        If node.Attributes.Length > 0 Then
+            For i = 0 To node.Attributes.Length - 1
+                Set attrNode = node.Attributes(i)
+                xpaths.Add newPath & "[@" & attrNode.nodeName & "='" & attrNode.nodeValue & "']"
+            Next i
+        End If
+        
+        ' Recursively process child nodes
+        For Each childNode In node.ChildNodes
+            GenerateAllXPaths childNode, newPath, xpaths
+        Next childNode
+    End If
+End Sub
