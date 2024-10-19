@@ -213,3 +213,56 @@ Function ExtractTokenFromResponse(response As String) As String
     On Error GoTo 0
 End Function
 
+
+
+'updated code block for above
+
+For j = 2 To nodeLastRow
+    Dim nodeXPath As String
+    Dim columnName As String
+    Dim columnValue As String
+    
+    nodeXPath = wsNodeMapping.Cells(j, 1).Value ' XPath from NodeMapping sheet
+    columnName = wsNodeMapping.Cells(j, 2).Value ' Column name in PolicyData sheet
+    columnValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, columnName)).Value
+    
+    ' Debug: print the XPath for tracking
+    Debug.Print "Processing XPath: " & nodeXPath
+    
+    ' Select the node using positional XPath and update its value if the node exists
+    Set node = xmlDoc.SelectSingleNode(nodeXPath)
+    
+    If Not node Is Nothing Then
+        node.Text = columnValue
+        Debug.Print "Updated node: " & nodeXPath & " with value: " & columnValue
+    Else
+        Debug.Print "Node not found: " & nodeXPath
+    End If
+Next j
+
+
+For k = 2 To attrLastRow
+    Dim attrXPath As String
+    Dim attrName As String
+    Dim attrColumnName As String
+    Dim attrValue As String
+    
+    attrXPath = wsAttributeMapping.Cells(k, 1).Value ' XPath from AttributeMapping sheet
+    attrName = wsAttributeMapping.Cells(k, 2).Value ' Attribute name
+    attrColumnName = wsAttributeMapping.Cells(k, 3).Value ' Column name in PolicyData sheet
+    attrValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, attrColumnName)).Value
+    
+    ' Debug: print the XPath for tracking
+    Debug.Print "Processing Attribute XPath: " & attrXPath & " Attribute: " & attrName
+    
+    ' Select the node and set the attribute if it exists
+    Set node = xmlDoc.SelectSingleNode(attrXPath)
+    
+    If Not node Is Nothing Then
+        node.SetAttribute attrName, attrValue
+        Debug.Print "Updated attribute: " & attrName & " in node: " & attrXPath & " with value: " & attrValue
+    Else
+        Debug.Print "Node not found for attribute: " & attrXPath
+    End If
+Next k
+
