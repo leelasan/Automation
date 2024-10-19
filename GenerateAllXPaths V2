@@ -1,7 +1,7 @@
 Sub GenerateAllXPaths(node As Object, currentPath As String, ByRef xpaths As Collection)
     Dim newPath As String
     Dim childNode As Object
-    Dim attribute As MSXML2.IXMLDOMAttribute ' Correctly declaring the attribute variable
+    Dim attrNode As MSXML2.IXMLDOMAttribute ' Renaming variable to avoid conflict
     Dim siblingIndex As Integer
     Dim siblingCount As Integer
     Dim siblingNode As Object
@@ -41,9 +41,9 @@ Sub GenerateAllXPaths(node As Object, currentPath As String, ByRef xpaths As Col
         
         ' Check for attributes and add their XPaths
         If node.Attributes.Length > 0 Then
-            For Each attribute In node.Attributes
-                xpaths.Add newPath & "[@" & attribute.nodeName & "='" & attribute.nodeValue & "']"
-            Next attribute
+            For Each attrNode In node.Attributes ' Renaming from attribute to attrNode
+                xpaths.Add newPath & "[@" & attrNode.nodeName & "='" & attrNode.nodeValue & "']"
+            Next attrNode
         End If
         
         ' Recursively process child nodes
