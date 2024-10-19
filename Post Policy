@@ -226,17 +226,32 @@ For j = 2 To nodeLastRow
     columnName = wsNodeMapping.Cells(j, 2).Value ' Column name in PolicyData sheet
     columnValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, columnName)).Value
     
-    ' Debug: print the XPath for tracking
-    Debug.Print "Processing XPath: " & nodeXPath
-    
-    ' Select the node using positional XPath and update its value if the node exists
-    Set node = xmlDoc.SelectSingleNode(nodeXPath)
-    
-    If Not node Is Nothing Then
-        node.Text = columnValue
-        Debug.Print "Updated node: " & nodeXPath & " with value: " & columnValue
+    ' Check if XPath contains positional indices
+    If InStr(nodeXPath, "[") > 0 Then
+        ' Use SelectNodes and handle positional indices
+        Dim nodeList As Object
+        Set nodeList = xmlDoc.SelectNodes(nodeXPath)
+        
+        If Not nodeList Is Nothing Then
+            Dim node As Object
+            For Each node In nodeList
+                node.Text = columnValue ' Update node value
+                Debug.Print "Updated node: " & nodeXPath & " with value: " & columnValue
+            Next node
+        Else
+            Debug.Print "Nodes not found: " & nodeXPath
+        End If
     Else
-        Debug.Print "Node not found: " & nodeXPath
+        ' Use SelectSingleNode if there are no positional indices
+        Dim singleNode As Object
+        Set singleNode = xmlDoc.SelectSingleNode(nodeXPath)
+        
+        If Not singleNode Is Nothing Then
+            singleNode.Text = columnValue ' Update node value
+            Debug.Print "Updated node: " & nodeXPath & " with value: " & columnValue
+        Else
+            Debug.Print "Node not found: " & nodeXPath
+        End If
     End If
 Next j
 
@@ -252,17 +267,32 @@ For k = 2 To attrLastRow
     attrColumnName = wsAttributeMapping.Cells(k, 3).Value ' Column name in PolicyData sheet
     attrValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, attrColumnName)).Value
     
-    ' Debug: print the XPath for tracking
-    Debug.Print "Processing Attribute XPath: " & attrXPath & " Attribute: " & attrName
-    
-    ' Select the node and set the attribute if it exists
-    Set node = xmlDoc.SelectSingleNode(attrXPath)
-    
-    If Not node Is Nothing Then
-        node.SetAttribute attrName, attrValue
-        Debug.Print "Updated attribute: " & attrName & " in node: " & attrXPath & " with value: " & attrValue
+    ' Check if XPath contains positional indices
+    If InStr(attrXPath, "[") > 0 Then
+        ' Use SelectNodes and handle positional indices
+        Dim nodeList As Object
+        Set nodeList = xmlDoc.SelectNodes(attrXPath)
+        
+        If Not nodeList Is Nothing Then
+            Dim node As Object
+            For Each node In nodeList
+                node.setAttribute attrName, attrValue ' Update attribute
+                Debug.Print "Updated attribute: " & attrName & " in node: " & attrXPath & " with value: " & attrValue
+            Next node
+        Else
+            Debug.Print "Nodes not found: " & attrXPath
+        End If
     Else
-        Debug.Print "Node not found for attribute: " & attrXPath
+        ' Use SelectSingleNode if there are no positional indices
+        Dim singleNode As Object
+        Set singleNode = xmlDoc.SelectSingleNode(attrXPath)
+        
+        If Not singleNode Is Nothing Then
+            singleNode.setAttribute attrName, attrValue ' Update attribute
+            Debug.Print "Updated attribute: " & attrName & " in node: " & attrXPath & " with value: " & attrValue
+        Else
+            Debug.Print "Node not found for attribute: " & attrXPath
+        End If
     End If
 Next k
 
