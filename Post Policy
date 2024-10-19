@@ -1,0 +1,215 @@
+Option Explicit
+
+' Function to perform Base64 encoding
+Function EncodeBase64(inputStr As String) As String
+    Dim xml As Object
+    Dim node As Object
+    
+    'Create the MSXML Document Object
+    Set xml = CreateObject("MSXml2.DOMDocument.3.0")
+    
+    'Create a node element
+    Set node = xml.createElement("b64")
+    
+    'Set the node's data type to base64
+    node.DataType = "bin.base64"
+    
+    'Conver inputStr to byte array
+    Dim byteArray() As Byte
+    byteArray = StrConv(inputStr, vbFromUnicode)
+    
+    'Set the node's nodeTypedValue to the byte array
+    node.nodeTypedValue = byteArray
+    
+    'Get the encoded text
+    EncodeBase64 = node.text
+End Function
+
+Sub SendPolicyRequests()
+    Dim wsConfig As Worksheet
+    Dim wsPolicyData As Worksheet
+    Dim wsNodeMapping As Worksheet
+    Dim wsAttributeMapping As Worksheet
+    Dim xmlTemplatePath As String
+    Dim endpointUrl As String
+    Dim tokenUrl As String
+    Dim saveFolder As String
+    Dim userId As String
+    Dim password As String
+    Dim token As String
+    Dim lastRow As Long, i As Long
+    Dim updatedXml As String
+    Dim xmlDoc As Object
+    Dim outputFilePath As String
+    Dim responseText As String
+    Dim encodedXml As String
+    Dim jsonPayload As String
+    Dim xmlHttp As Object
+    
+    ' Set worksheet references
+    Set wsConfig = ThisWorkbook.Sheets("Config")
+    Set wsPolicyData = ThisWorkbook.Sheets("PolicyData")
+    Set wsNodeMapping = ThisWorkbook.Sheets("NodeMapping")
+    Set wsAttributeMapping = ThisWorkbook.Sheets("AttributeMapping")
+    
+    ' Read configuration values from the "Config" sheet
+    endpointUrl = wsConfig.Range("B2").Value ' Policy endpoint URL
+    tokenUrl = wsConfig.Range("B3").Value ' Token endpoint URL
+    xmlTemplatePath = wsConfig.Range("B4").Value ' Path to XML template
+    saveFolder = wsConfig.Range("B5").Value ' Folder path to save modified XMLs
+    userId = wsConfig.Range("B6").Value ' User ID for token
+    password = wsConfig.Range("B7").Value ' Password for token
+    
+    ' Get the last row in the "PolicyData" sheet
+    lastRow = wsPolicyData.Cells(wsPolicyData.Rows.Count, 1).End(xlUp).Row
+
+    ' Loop through each row in the "PolicyData" sheet
+    For i = 2 To lastRow
+        ' Load the XML template
+        Set xmlDoc = CreateObject("MSXML2.DOMDocument")
+        xmlDoc.Load xmlTemplatePath
+        
+        ' =====================
+        ' Update XML Nodes with Values
+        ' =====================
+        Dim nodeLastRow As Long, j As Long
+        nodeLastRow = wsNodeMapping.Cells(wsNodeMapping.Rows.Count, 1).End(xlUp).Row
+        
+        For j = 2 To nodeLastRow
+            Dim nodeXPath As String
+            Dim columnName As String
+            Dim columnValue As String
+            
+            nodeXPath = wsNodeMapping.Cells(j, 1).Value ' XPath from NodeMapping sheet
+            columnName = wsNodeMapping.Cells(j, 2).Value ' Column name in PolicyData sheet
+            columnValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, columnName)).Value
+            
+            ' Update the node's text if it exists
+            If Not xmlDoc.SelectSingleNode(nodeXPath) Is Nothing Then
+                xmlDoc.SelectSingleNode(nodeXPath).text = columnValue
+            End If
+        Next j
+        
+        ' =====================
+        ' Update Attributes
+        ' =====================
+        Dim attrLastRow As Long, k As Long
+        attrLastRow = wsAttributeMapping.Cells(wsAttributeMapping.Rows.Count, 1).End(xlUp).Row
+        
+        For k = 2 To attrLastRow
+            Dim attrXPath As String
+            Dim attrName As String
+            Dim attrColumnName As String
+            Dim attrValue As String
+            
+            attrXPath = wsAttributeMapping.Cells(k, 1).Value ' XPath from AttributeMapping sheet
+            attrName = wsAttributeMapping.Cells(k, 2).Value ' Attribute name
+            attrColumnName = wsAttributeMapping.Cells(k, 3).Value ' Column name in PolicyData sheet
+            attrValue = wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, attrColumnName)).Value
+            
+            ' Update the attribute if it exists
+            If Not xmlDoc.SelectSingleNode(attrXPath) Is Nothing Then
+                xmlDoc.SelectSingleNode(attrXPath).setAttribute attrName, attrValue
+            End If
+        Next k
+        
+        ' =====================
+        ' Save and Encode Updated XML
+        ' =====================
+        ' Convert updated XML to string
+        updatedXml = xmlDoc.xml
+        
+        ' Save the updated XML to a file
+        outputFilePath = saveFolder & "\" & wsPolicyData.Cells(i, GetColumnNumberByHeader(wsPolicyData, "PolicyNumber")).Value & "_updated.xml"
+        SaveTextToFile outputFilePath, updatedXml
+        MsgBox "Saved updated XML to: " & outputFilePath
+        
+        ' Encode the XML in Base64
+        encodedXml = EncodeBase64(updatedXml)
+        MsgBox "Encoded XML: " & encodedXml
+        
+        ' Create JSON payload
+        jsonPayload = "{""encodedACORDXml"": """ & encodedXml & """}"
+
+        ' Get the token using the provided credentials
+         token = GetToken(tokenUrl, userId, password)
+        If token = "" Then
+            MsgBox "Failed to retrieve token. Aborting operation."
+            Exit Sub
+        End If
+
+        ' Send HTTP POST request
+        Set xmlHttp = CreateObject("MSXML2.ServerXMLHTTP")
+        xmlHttp.Open "POST", endpointUrl, False
+        xmlHttp.SetRequestHeader "Content-Type", "application/json"
+        xmlHttp.SetRequestHeader "Authorization", "Bearer " & token
+        xmlHttp.Send jsonPayload
+
+        ' Get the response
+        responseText = xmlHttp.responseText
+        MsgBox "Response: " & responseText
+
+        ' Cleanup
+        Set xmlDoc = Nothing
+        Set xmlHttp = Nothing
+    Next i
+End Sub
+
+' Function to get the column number by header name
+Function GetColumnNumberByHeader(sheet As Worksheet, header As String) As Integer
+    Dim lastCol As Integer
+    Dim i As Integer
+    lastCol = sheet.Cells(1, sheet.Columns.Count).End(xlToLeft).Column
+    For i = 1 To lastCol
+        If sheet.Cells(1, i).Value = header Then
+            GetColumnNumberByHeader = i
+            Exit Function
+        End If
+    Next i
+    GetColumnNumberByHeader = -1 ' Return -1 if header not found
+End Function
+
+' Utility function to save text to a file
+Sub SaveTextToFile(filePath As String, text As String)
+    Dim fileNumber As Integer
+    fileNumber = FreeFile
+    Open filePath For Output As #fileNumber
+    Print #fileNumber, text
+    Close #fileNumber
+End Sub
+
+' Function to retrieve the token
+Function GetToken(url As String, userId As String, password As String) As String
+    Dim xmlHttp As Object
+    Dim jsonPayload As String
+    Dim responseText As String
+    Dim token As String
+    
+    ' Create JSON payload for token request
+    jsonPayload = "{""userId"": """ & userId & """, ""password"": """ & password & """}"
+    
+    ' Send HTTP POST request to get the token
+    Set xmlHttp = CreateObject("MSXML2.ServerXMLHTTP")
+    xmlHttp.Open "POST", url, False
+    xmlHttp.SetRequestHeader "Content-Type", "application/json"
+    xmlHttp.Send jsonPayload
+    
+    ' Get the response
+    responseText = xmlHttp.responseText
+    
+    ' Extract the token from the response (assuming JSON response format)
+    token = ExtractTokenFromResponse(responseText)
+    
+    ' Return the token
+    GetToken = token
+End Function
+
+' Utility function to extract token from JSON response
+Function ExtractTokenFromResponse(response As String) As String
+    On Error Resume Next
+    Dim json As Object
+    Set json = JsonConverter.ParseJson(response)
+    ExtractTokenFromResponse = json("token")
+    On Error GoTo 0
+End Function
+
