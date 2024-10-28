@@ -99,22 +99,26 @@ public class XMLUpdateTest {
                     continue; // Skip header row
                 }
 
-                String xpathExpression = row.getCell(1).getStringCellValue();
-                String type = row.getCell(0).getStringCellValue();
-                String policyDataColumn = row.getCell(2).getStringCellValue();
-                String parameterizedValue = policyDataMap.get(policyDataColumn);
+                // Check if UpdateXML is set to "Yes"
+                Cell updateXMLCell = row.getCell(3); // Assuming UpdateXML is in the 4th column (index 3)
+                if (updateXMLCell != null && "Yes".equalsIgnoreCase(updateXMLCell.getStringCellValue())) {
+                    String xpathExpression = row.getCell(1).getStringCellValue();
+                    String type = row.getCell(0).getStringCellValue();
+                    String policyDataColumn = row.getCell(2).getStringCellValue();
+                    String parameterizedValue = policyDataMap.get(policyDataColumn);
 
-                // Based on "Type", perform either node or attribute update
-                NodeList nodes = (NodeList) xPath.compile(xpathExpression).evaluate(doc, XPathConstants.NODESET);
+                    // Based on "Type", perform either node or attribute update
+                    NodeList nodes = (NodeList) xPath.compile(xpathExpression).evaluate(doc, XPathConstants.NODESET);
 
-                if (type.equalsIgnoreCase("Node")) {
-                    if (nodes.getLength() > 0) {
-                        nodes.item(0).setTextContent(parameterizedValue);
-                    }
-                } else if (type.equalsIgnoreCase("Attribute")) {
-                    if (nodes.getLength() > 0) {
-                        Element element = (Element) nodes.item(0);
-                        element.setAttribute("tc", parameterizedValue);
+                    if (type.equalsIgnoreCase("Node")) {
+                        if (nodes.getLength() > 0) {
+                            nodes.item(0).setTextContent(parameterizedValue);
+                        }
+                    } else if (type.equalsIgnoreCase("Attribute")) {
+                        if (nodes.getLength() > 0) {
+                            Element element = (Element) nodes.item(0);
+                            element.setAttribute("tc", parameterizedValue);
+                        }
                     }
                 }
             }
