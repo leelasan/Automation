@@ -1,29 +1,18 @@
 package updateXMLStructure;
 
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.w3c.dom.*;
-import javax.xml.parsers.*;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-public class XMLUpdateTest {
+public class DataProviderClass {
 
-    // Load Excel data and provide each row of PolicyData as a separate test
     @DataProvider(name = "policyDataProvider")
-    public Object[][] policyDataProvider() {
+    public static Object[][] policyDataProvider() {
         try {
             FileInputStream fis = new FileInputStream(new File("/mnt/data/data.xlsx"));
             Workbook workbook = new XSSFWorkbook(fis);
@@ -38,7 +27,7 @@ public class XMLUpdateTest {
             for (int rowIndex = 1; rowIndex <= rowCount; rowIndex++) {
                 Map<String, String> policyDataMap = new HashMap<>();
                 Row policyDataRow = policyDataSheet.getRow(rowIndex);
-                
+
                 // Read each cell and add to policyDataMap
                 for (Cell cell : policyDataRow) {
                     String columnName = policyDataSheet.getRow(0).getCell(cell.getColumnIndex()).getStringCellValue();
@@ -50,7 +39,7 @@ public class XMLUpdateTest {
                 data[rowIndex - 1][0] = policyDataMap;
                 data[rowIndex - 1][1] = mappingSheet;
             }
-            
+
             workbook.close();
             return data;
         } catch (Exception e) {
@@ -58,8 +47,30 @@ public class XMLUpdateTest {
             return new Object[0][0];
         }
     }
+}
 
-    @Test(dataProvider = "policyDataProvider")
+
+
+
+package updateXMLStructure;
+
+import org.testng.annotations.Test;
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import org.apache.poi.ss.usermodel.*;
+
+public class XMLUpdateTest {
+
+    @Test(dataProvider = "policyDataProvider", dataProviderClass = DataProviderClass.class)
     public void testXMLUpdate(Map<String, String> policyDataMap, Sheet mappingSheet) {
         try {
             // Load the XML template
