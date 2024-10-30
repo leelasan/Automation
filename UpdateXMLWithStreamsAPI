@@ -1,0 +1,205 @@
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.annotations.DataProvider;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+public class DataProviderClass {
+
+    @DataProvider(name = "xmlUpdateData")
+    public static Iterator<Object[]> getData() throws IOException {
+        List<Object[]> data = new ArrayList<>();
+        FileInputStream file = new FileInputStream("path_to_data_sheet.xlsx");
+        Workbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheet("PolicyData");
+
+        for (Row row : sheet) {
+            String testCaseName = row.getCell(0).getStringCellValue();
+            String execution = row.getCell(1).getStringCellValue();
+            String templateName = row.getCell(2).getStringCellValue();
+
+            if ("Yes".equalsIgnoreCase(execution)) {
+                List<Object[]> updates = new ArrayList<>();
+                int i = 3; // Start from the fourth cell where nodes data begins
+                
+                while (i < row.getLastCellNum()) {
+                    String nodeName = row.getCell(i).getStringCellValue();
+                    String attributeName = row.getCell(i + 1) != null ? row.getCell(i + 1).getStringCellValue() : "";
+                    String newValue = row.getCell(i + 2).getStringCellValue();
+                    String condition = row.getCell(i + 3) != null ? row.getCell(i + 3).getStringCellValue() : "";
+
+                    updates.add(new Object[]{nodeName, attributeName, newValue, condition});
+                    i += 4; // Move to the next set of NodeX_Name, NodeX_Attr, NodeX_Value, NodeX_Condition
+                }
+                
+                data.add(new Object[]{testCaseName, templateName, updates});
+            }
+        }
+        
+        workbook.close();
+        file.close();
+
+        return data.iterator();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+import org.testng.annotations.Test;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Parameters;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.util.List;
+import java.util.stream.IntStream;
+
+@Listeners(TestListener.class)
+public class XMLUpdateTest {
+
+    private Document doc;
+    private String templateDir;
+
+    // Load the template directory from TestNG XML as a parameter
+    @Parameters("templateDir")
+    @BeforeClass
+    public void setup(String templateDir) {
+        this.templateDir = templateDir;
+    }
+
+    @BeforeMethod
+    @Parameters({"templateName"})
+    public void loadTemplate(String templateName) throws Exception {
+        // Load the specified template XML file
+        File templateFile = new File(templateDir, templateName);
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        doc = builder.parse(templateFile);
+    }
+
+    @Test(dataProvider = "xmlUpdateData", dataProviderClass = DataProviderClass.class)
+    public void updateXML(String testCaseName, String templateName, List<Object[]> updates) throws Exception {
+        // Extract PolNumber from Node1_Value (first update entry's newValue)
+        String polNumber = (String) updates.get(0)[2];
+
+        // Loop through each set of node/attribute data for this test case
+        for (Object[] update : updates) {
+            String nodeName = (String) update[0];
+            String attributeName = (String) update[1];
+            String newValue = (String) update[2];
+            String condition = update.length > 3 ? (String) update[3] : "";
+
+            NodeList nodeList = doc.getElementsByTagName(nodeName);
+
+            IntStream.range(0, nodeList.getLength())
+                    .mapToObj(nodeList::item)
+                    .filter(node -> node instanceof Element)
+                    .map(node -> (Element) node)
+                    .forEach(element -> {
+                        boolean matchesCondition = true;
+
+                        // Check condition if specified (e.g., "Party id=Party_Beneficiary_1")
+                        if (!condition.isEmpty()) {
+                            String[] conditionParts = condition.split("=");
+                            String conditionAttribute = conditionParts[0].trim();
+                            String conditionValue = conditionParts[1].trim();
+
+                            // Find the parent node to check the condition
+                            Node parentNode = element.getParentNode();
+                            while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
+                                Element parentElement = (Element) parentNode;
+                                if (parentElement.hasAttribute(conditionAttribute) &&
+                                    parentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
+                                    matchesCondition = true;
+                                    break;
+                                }
+                                parentNode = parentNode.getParentNode();
+                            }
+                        }
+
+                        if (matchesCondition) {
+                            // Apply update
+                            if (attributeName.isEmpty()) {
+                                element.setTextContent(newValue);
+                            } else {
+                                element.setAttribute(attributeName, newValue);
+                            }
+                        }
+                    });
+        }
+
+        // Save each test case output to a unique file in the "output" directory with PolNumber as filename
+        File outputDir = new File("output");
+        if (!outputDir.exists()) {
+            outputDir.mkdir();
+        }
+        
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(new File(outputDir, polNumber + "_updated.xml"));
+        transformer.transform(source, result);
+    }
+
+    @AfterClass
+    public void cleanup() {
+        // Any necessary cleanup after all tests
+    }
+}
+
+
+
+
+
+
+
+
+
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="XML Update Suite">
+    <parameter name="templateDir" value="path/to/xml/templates" />
+    <test name="XML Update Test">
+        <classes>
+            <class name="XMLUpdateTest" />
+        </classes>
+    </test>
+</suite>
+
+
+
+
+
+
+
+
+
+TestCaseName	Execution	TemplateName	Node1_Name	Node1_Attr	Node1_Value (PolNumber)	Node1_Condition	Node2_Name	Node2_Attr	Node2_Value	Node2_Condition
+TestCase1	Yes	Template1.xml	PolNumber		POL12345		FirstName		UpdatedFirstName1	Party id=Party_Beneficiary_1
+TestCase2	Yes	Template2.xml	PolNumber		POL67890		TransType	tc	104	
+TestCase3	Yes	Template1.xml	PolNumber		POL11111		AccountNumber		1234567890	
