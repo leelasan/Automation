@@ -1,0 +1,98 @@
+@Test(dataProvider = "xmlUpdateData", dataProviderClass = DataProviderClass.class)
+public void updateXML(String testCaseName, String templateName, List<Object[]> updates) throws Exception {
+    // Load the XML template for each test case
+    loadTemplate(templateName);
+
+    // Extract PolNumber from Node1_Value (first update entry's newValue)
+    String polNumber = (String) updates.get(0)[2];
+    extentTest = extent.createTest("Policy Creation Test for " + polNumber);
+
+    // Update XML nodes based on test data
+    for (Object[] update : updates) {
+        String nodeName = (String) update[0];
+        String attributeName = (String) update[1];
+        String newValue = (String) update[2];
+        String condition = update.length > 3 ? (String) update[3] : "";
+
+        NodeList nodeList = doc.getElementsByTagName(nodeName);
+
+        IntStream.range(0, nodeList.getLength())
+                .mapToObj(nodeList::item)
+                .filter(node -> node instanceof Element)
+                .map(node -> (Element) node)
+                .forEach(element -> {
+                    boolean matchesCondition = true;
+
+                    // Check condition if specified (e.g., "Party id=Party_Beneficiary_1")
+                    if (!condition.isEmpty()) {
+                        String[] conditionParts = condition.split("=");
+                        String conditionAttribute = conditionParts[0].trim();
+                        String conditionValue = conditionParts[1].trim();
+
+                        Node parentNode = element.getParentNode();
+                        while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
+                            Element parentElement = (Element) parentNode;
+                            if (parentElement.hasAttribute(conditionAttribute) &&
+                                parentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
+                                matchesCondition = true;
+                                break;
+                            }
+                            parentNode = parentNode.getParentNode();
+                        }
+                    }
+
+                    if (matchesCondition) {
+                        if (attributeName.isEmpty()) {
+                            // If newValue is blank, clear the node content
+                            if (newValue.isEmpty()) {
+                                element.setTextContent("");  // Set node to "null" by making its content empty
+                                extentTest.log(Status.INFO, "Cleared value of " + nodeName + " as per test data sheet instruction");
+                            } else {
+                                element.setTextContent(newValue);
+                                extentTest.log(Status.INFO, "Updated " + nodeName + " with value: " + newValue);
+                            }
+                        } else {
+                            element.setAttribute(attributeName, newValue);
+                            extentTest.log(Status.INFO, "Updated attribute " + attributeName + " of " + nodeName + " with value: " + newValue);
+                        }
+                    }
+                });
+    }
+
+    File outputDir = new File("output");
+    if (!outputDir.exists()) outputDir.mkdir();
+
+    File savedFile = new File(outputDir, polNumber + "_updated.xml");
+    Transformer transformer = TransformerFactory.newInstance().newTransformer();
+    DOMSource source = new DOMSource(doc);
+    StreamResult result = new StreamResult(savedFile);
+    transformer.transform(source, result);
+    extentTest.log(Status.INFO, "Updated XML saved as: " + savedFile.getPath());
+
+    // Convert XML to Base64 and create policy via API
+    String encodedXML = encodeXMLToBase64(savedFile.getPath());
+    extentTest.log(Status.INFO, "Encoded XML to Base64 for policy creation");
+
+    try {
+        String policyNumber = createPolicy(token, encodedXML);
+        extentTest.log(Status.PASS, "Policy created successfully with Policy Number: " + policyNumber);
+    } catch (Exception e) {
+        extentTest.log(Status.FAIL, "Policy creation failed: " + e.getMessage());
+        throw e;
+    }
+}
+
+private void loadTemplate(String templateName) throws Exception {
+    extentTest.log(Status.INFO, "Loading XML template: " + templateName);
+    try {
+        File templateFile = new File(templateDir, templateName);
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        doc = builder.parse(templateFile);
+        extentTest.log(Status.PASS, "Template loaded successfully");
+    } catch (Exception e) {
+        extentTest.log(Status.FAIL, "Failed to load template: " + e.getMessage());
+        throw e;
+    }
+}
