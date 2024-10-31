@@ -160,9 +160,20 @@ public class XMLPolicyTest {
         return (Node) xpath.evaluate(xpathExpr, xmlDoc, XPathConstants.NODE);
     }
 
+    package test;
+
+import dataprovider.PolicyDataProvider;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+
+import java.util.Map;
+
+public class XMLPolicyTest {
+
     private void updateAttributesFromMapping(Document xmlDoc, Map<String, String> dataRow) throws Exception {
-        Map<String, String> tcMapping = new PolicyDataProvider().getPolicyData(); // Mocked tcMapping
-        // tcMapping logic here from PolicyDataProvider
+        PolicyDataProvider provider = new PolicyDataProvider();
+        Map<String, String> tcMapping = provider.loadTCMapping("RL_TestData.xlsx");
 
         for (Map.Entry<String, String> entry : dataRow.entrySet()) {
             String fieldName = entry.getKey();
@@ -183,6 +194,9 @@ public class XMLPolicyTest {
             }
         }
     }
+
+    // Other methods like findNode(), updateXMLBasedOnPolicyData(), etc., remain the same
+}
 
     private void createPolicyUsingAPI(String xmlFilePath, Map<String, String> dataRow) throws Exception {
         byte[] xmlBytes = Files.readAllBytes(Paths.get(xmlFilePath));
