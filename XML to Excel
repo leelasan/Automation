@@ -1,0 +1,107 @@
+import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.*;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+public class XMLToExcelConverter {
+
+    public static void main(String[] args) {
+        String folderPath = "path/to/your/xml/folder"; // Specify folder path
+        String outputPath = "path/to/output/XML_Structure_Condensed.xlsx"; // Specify output path
+        
+        try {
+            // Retrieve all XML files in the folder
+            File folder = new File(folderPath);
+            File[] xmlFiles = folder.listFiles((dir, name) -> name.endsWith(".xml"));
+
+            if (xmlFiles == null || xmlFiles.length == 0) {
+                System.out.println("No XML files found in the specified folder.");
+                return;
+            }
+
+            // Initialize structures to store column headers and file data
+            Set<String> allColumns = new LinkedHashSet<>(); // Stores all unique column headers
+            List<Map<String, String>> allRows = new ArrayList<>(); // Stores data for each file
+
+            // Process each XML file
+            for (File file : xmlFiles) {
+                Map<String, String> rowData = new LinkedHashMap<>();
+                rowData.put("FileName", file.getName());
+
+                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                Document doc = dBuilder.parse(file);
+                doc.getDocumentElement().normalize();
+
+                // Parse nodes and construct row data
+                parseNode(doc.getDocumentElement(), null, rowData);
+                allColumns.addAll(rowData.keySet()); // Collect column headers
+                allRows.add(rowData);
+            }
+
+            // Write data to Excel
+            writeDataToExcel(allColumns, allRows, outputPath);
+            System.out.println("Excel file created at: " + outputPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void parseNode(Node node, String parentId, Map<String, String> rowData) {
+        String nodeName = node.getNodeName();
+        NamedNodeMap attributes = node.getAttributes();
+        String nodeId = (attributes != null && attributes.getNamedItem("id") != null) 
+                        ? attributes.getNamedItem("id").getNodeValue() 
+                        : parentId;
+        
+        // Create column name based on uniqueness and parent ID
+        String columnName = (nodeId != null) ? nodeName + "#" + nodeId : nodeName;
+        
+        if (node.getNodeType() == Node.ELEMENT_NODE && node.getTextContent().trim().length() > 0) {
+            rowData.put(columnName, node.getTextContent().trim());
+        } else if (attributes != null && attributes.getNamedItem("tc") != null) {
+            rowData.put(columnName, attributes.getNamedItem("tc").getNodeValue());
+        }
+        
+        // Recurse through child nodes
+        NodeList childNodes = node.getChildNodes();
+        for (int i = 0; i < childNodes.getLength(); i++) {
+            parseNode(childNodes.item(i), nodeId, rowData);
+        }
+    }
+
+    private static void writeDataToExcel(Set<String> allColumns, List<Map<String, String>> allRows, String outputPath) throws Exception {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("XML Data");
+
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        int colIdx = 0;
+        for (String column : allColumns) {
+            Cell cell = headerRow.createCell(colIdx++);
+            cell.setCellValue(column);
+        }
+
+        // Create data rows
+        int rowIdx = 1;
+        for (Map<String, String> rowData : allRows) {
+            Row row = sheet.createRow(rowIdx++);
+            colIdx = 0;
+            for (String column : allColumns) {
+                Cell cell = row.createCell(colIdx++);
+                String value = rowData.getOrDefault(column, ""); // Leave blank if data is missing
+                cell.setCellValue(value);
+            }
+        }
+
+        // Write to Excel file
+        try (FileOutputStream fileOut = new FileOutputStream(outputPath)) {
+            workbook.write(fileOut);
+        }
+        workbook.close();
+    }
+}
