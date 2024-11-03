@@ -105,3 +105,47 @@ public class XMLToExcelConverter {
         workbook.close();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private static void parseNode(Node node, String parentId, Map<String, String> rowData) {
+    String nodeName = node.getNodeName();
+    NamedNodeMap attributes = node.getAttributes();
+    String nodeId = (attributes != null && attributes.getNamedItem("id") != null) 
+                    ? attributes.getNamedItem("id").getNodeValue() 
+                    : parentId;
+    
+    // Create column name based on uniqueness and parent ID
+    String columnName = (nodeId != null) ? nodeName + "#" + nodeId : nodeName;
+
+    // Capture node value or use an empty placeholder if no content or attributes are present
+    if (node.getNodeType() == Node.ELEMENT_NODE) {
+        if (node.getTextContent().trim().length() > 0) {
+            rowData.put(columnName, node.getTextContent().trim());
+        } else if (attributes != null && attributes.getNamedItem("tc") != null) {
+            rowData.put(columnName, attributes.getNamedItem("tc").getNodeValue());
+        } else {
+            // Add placeholder for nodes with no text or tc attribute
+            rowData.put(columnName, "");
+        }
+    }
+    
+    // Recurse through child nodes
+    NodeList childNodes = node.getChildNodes();
+    for (int i = 0; i < childNodes.getLength(); i++) {
+        parseNode(childNodes.item(i), nodeId, rowData);
+    }
+}
