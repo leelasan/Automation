@@ -1,0 +1,57 @@
+private void applyNodeUpdates(List<Object[]> updates) {
+    for (Object[] update : updates) {
+        String nodeName = (String) update[0];
+        String attributeValue = (String) update[1];
+        String nodeValue = (String) update[2];
+        String condition = (String) update[3];
+
+        NodeList nodeList = doc.getElementsByTagName(nodeName);
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Element element = (Element) nodeList.item(i);
+            
+            // Apply the condition to find the correct node
+            if (matchesCondition(element, condition)) {
+                if (attributeValue != null && !attributeValue.isEmpty()) {
+                    element.setAttribute("tc", attributeValue);
+                }
+                
+                if (nodeValue != null && !nodeValue.isEmpty()) {
+                    if (nodeName.equals("LifeParticipant")) {
+                        setLifeParticipantData(element, nodeValue);
+                    } else {
+                        element.setTextContent(nodeValue);
+                    }
+                }
+            }
+        }
+    }
+}
+
+private void setLifeParticipantData(Element lifeParticipant, String nodeValue) {
+    // Handle setting specific values inside LifeParticipant without creating duplicates
+    String[] dataFields = nodeValue.split(";"); // Assuming values are separated by semicolons in the input
+    for (String field : dataFields) {
+        String[] keyValue = field.split("=");
+        if (keyValue.length == 2) {
+            String childNodeName = keyValue[0].trim();
+            String childNodeValue = keyValue[1].trim();
+            updateOrCreateChildNode(lifeParticipant, childNodeName, childNodeValue);
+        }
+    }
+}
+
+private void updateOrCreateChildNode(Element parent, String childNodeName, String value) {
+    NodeList childNodes = parent.getElementsByTagName(childNodeName);
+    Element childElement;
+
+    if (childNodes.getLength() > 0) {
+        // Use existing child node, avoiding duplicates
+        childElement = (Element) childNodes.item(0);
+    } else {
+        // Create the child node if it does not exist
+        childElement = doc.createElement(childNodeName);
+        parent.appendChild(childElement);
+    }
+
+    childElement.setTextContent(value);  // Set or update the text content
+}
