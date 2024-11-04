@@ -48,7 +48,6 @@ public class XMLUpdateTest extends WebBase {
     public ExtentTest subTest = null;
     public ExtentTest test = null;
 
-    // Define the WOP and PUAR coverage templates as constant strings
     private static final String WOP_COVERAGE_TEMPLATE = 
         "<Coverage id=\"WOP\">" +
         "<ProductCode>WOP</ProductCode>" +
@@ -186,21 +185,50 @@ public class XMLUpdateTest extends WebBase {
         for (Object[] update : updates) {
             String nodeName = (String) update[0];
             String attributeValue = (String) update[1];
-           
             String nodeValue = (String) update[2];
+           
             String condition = (String) update[3];
 
             NodeList nodeList = doc.getElementsByTagName(nodeName);
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Element element = (Element) nodeList.item(i);
+                
+                // Apply the condition to find the correct node
                 if (matchesCondition(element, condition)) {
                     if (attributeValue != null && !attributeValue.isEmpty()) {
+                        // Update attribute without overwriting the element content
                         element.setAttribute("tc", attributeValue);
                     }
-                    element.setTextContent(nodeValue);
+                    if (nodeValue != null && !nodeValue.isEmpty()) {
+                        // Update or create child nodes to preserve structure for nested nodes like LifeParticipant
+                        Node parentNode = element.getParentNode();
+                        if (parentNode != null && parentNode.getNodeName().equals("LifeParticipant")) {
+                            // Find or create specific child node inside LifeParticipant
+                            updateOrCreateChildNode(element, nodeName, nodeValue);
+                        } else {
+                            // If it's a simple node, just update the text content
+                            element.setTextContent(nodeValue);
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private void updateOrCreateChildNode(Element parent, String childNodeName, String value) {
+        NodeList childNodes = parent.getElementsByTagName(childNodeName);
+        Element childElement;
+        
+        if (childNodes.getLength() > 0) {
+            // Update the existing child node if found
+            childElement = (Element) childNodes.item(0);
+        } else {
+            // Create a new child node if it doesn't exist
+            childElement = doc.createElement(childNodeName);
+            parent.appendChild(childElement);
+        }
+        
+        childElement.setTextContent(value);
     }
 
     private boolean matchesCondition(Element element, String condition) {
