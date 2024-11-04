@@ -272,6 +272,25 @@ public class XMLUpdateTest extends WebBase {
         return responseBody.split("\"token\"\\s*:\\s*\"")[1].split("\"")[0];
     }
 
+private void loadTemplate(String templateName, ExtentTest subTest) throws Exception {
+    subTest.log(LogStatus.INFO, "Loading XML template: [<font color='#30A0DB'><b>" + templateName +"</b></font>]");
+    File templateFile = new File(templateDir, templateName);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    doc = builder.parse(templateFile);
+    subTest.log(LogStatus.PASS, "Template loaded successfully");
+}
+
+private void loadTemplateFromFile(String filePath) throws Exception {
+    File templateFile = new File(filePath);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    doc = builder.parse(templateFile);
+}
+
+
     public void logError(ExtentTest localTest, Exception e, WebDriver driver) {
         String screenshotFileName = "/Screenshots/Screenshot_" + Math.random() + ".png";
         String screenshotPath = System.getProperty("user.dir") + folderPath.substring(2) + screenshotFileName;
