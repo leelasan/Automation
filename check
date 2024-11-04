@@ -55,19 +55,26 @@ public class XMLUpdateTest2 extends WebBase {
     public ExtentTest tokenSubTest = null;
 
     private static final String WOP_COVERAGE_TEMPLATE =
-            "<Coverage id=\"WOP\">" +
-            "<ProductCode>WOP</ProductCode>" +
-            "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
-            "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
-            "<LifeParticipant PartyID=\"\">" +
-            "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
-            "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
-            "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
-            "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
-            "</LifeParticipant>" +
-            "<EffDate>2022-04-22</EffDate>" +
-            "<ExpiryDate>2035-04-22</ExpiryDate>" +
-            "</Coverage>";
+    "<Coverage id=\"WOP\">" +
+    "<ProductCode>WOP</ProductCode>" +
+    "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+    "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+    "<LifeParticipant PartyID=\"\">" +
+    "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+    "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
+    "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+    "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+    "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+    "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+    "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+    "<ExtraRatingFactor>1</ExtraRatingFactor>" +
+    "</LifeParticipant>" +
+    "<RiderInsured>Primary Insured</RiderInsured>" +
+    "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+    "<LevelPremiumPeriod/>" +
+    "<EffDate>2022-04-22</EffDate>" +
+    "<ExpiryDate>2035-04-22</ExpiryDate>" +
+    "</Coverage>";
 
     @BeforeClass
     public void setup() throws Exception {
