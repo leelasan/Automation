@@ -1,0 +1,54 @@
+// Define a single generic template for Coverage
+private static final String COVERAGE_TEMPLATE = 
+    "<Coverage id=\"\">" +  // id will be set dynamically
+    "<ProductCode></ProductCode>" +  // ProductCode will be set dynamically
+    "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+    "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+    "<LifeParticipant PartyID=\"\">" +
+    "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+    "<TobaccoPremiumBasis tc=\"1\">Smoker</TobaccoPremiumBasis>" +
+    "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+    "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+    "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+    "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+    "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+    "<ExtraRatingFactor>1</ExtraRatingFactor>" +
+    "</LifeParticipant>" +
+    "<RiderInsured>Primary Insured</RiderInsured>" +
+    "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+    "<LevelPremiumPeriod/>" +
+    "<EffDate>2022-04-22</EffDate>" +
+    "<ExpiryDate>2035-04-22</ExpiryDate>" +
+    "</Coverage>";
+
+private void addCoverageSections(List<Object[]> updates) throws Exception {
+    for (Object[] update : updates) {
+        String nodeNameCondition = (String) update[0];
+        String addCoverageFlag = (String) update[2];
+
+        // Check if this update is for a coverage (e.g., Coverage=ADB)
+        if (nodeNameCondition.startsWith("Coverage=") && "Yes".equalsIgnoreCase(addCoverageFlag)) {
+            // Extract the specific coverage type (e.g., "ADB")
+            String coverageId = nodeNameCondition.split("=")[1];
+            if (!coverageExists(coverageId)) {
+                // Create the coverage element with the specific id and product code
+                Element newCoverage = createCoverageNode(coverageId);
+                Node lifeNode = doc.getElementsByTagName("Life").item(0);
+                lifeNode.appendChild(newCoverage);
+            }
+        }
+    }
+}
+
+private Element createCoverageNode(String coverageId) throws Exception {
+    // Load the generic coverage template
+    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    Document coverageDoc = builder.parse(new ByteArrayInputStream(COVERAGE_TEMPLATE.getBytes(StandardCharsets.UTF_8)));
+    
+    // Get the coverage element from the template and set specific attributes
+    Element coverageElement = (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
+    coverageElement.setAttribute("id", coverageId);  // Set Coverage id
+    coverageElement.getElementsByTagName("ProductCode").item(0).setTextContent(coverageId);  // Set ProductCode
+
+    return coverageElement;
+}
