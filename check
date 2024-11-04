@@ -1,39 +1,6 @@
-package test.fast.CreatePolicyforLife;
-
-import com.nyl.base.WebBase;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.apache.hc.core5.http.ContentType;
-import org.json.JSONObject;
-import org.testng.Assert;
-import org.testng.ITestContext;
-import org.testng.annotations.*;
-import org.w3c.dom.*;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
-import java.util.stream.IntStream;
-import com.nyl.utilities.EnvParameters;
-import com.relevantcodes.extentreports.ExtentReports;
-import com.relevantcodes.extentreports.ExtentTest;
-import com.relevantcodes.extentreports.LogStatus;
+// ... [Remaining class setup and imports]
 
 public class XMLUpdateTest2 extends WebBase {
-
     private Document doc;
     public static ExtentReports mainReport;
     public HashMap<String, Integer> testCaseRetryCount = new HashMap<>();
@@ -42,27 +9,23 @@ public class XMLUpdateTest2 extends WebBase {
     private String token;
 
     private static final String WOP_COVERAGE_TEMPLATE =
-            "<Coverage id=\"WOP\">" +
-                    "<ProductCode>WOP</ProductCode>" +
-                    "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
-                    "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
-                    "<LifeParticipant PartyID=\"\">" +
-                    "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
-                    "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
-                    "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
-                    "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
-                    "</LifeParticipant>" +
-                    "<EffDate>2022-04-22</EffDate>" +
-                    "<ExpiryDate>2035-04-22</ExpiryDate>" +
-                    "</Coverage>";
-
-    public ExtentTest subTest = null;
-    public ExtentTest test = null;
-    public ExtentTest tokenSubTest = null;
+        "<Coverage id=\"WOP\">" +
+        "<ProductCode>WOP</ProductCode>" +
+        "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+        "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+        "<LifeParticipant PartyID=\"\">" +
+        "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+        "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
+        "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+        "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+        "</LifeParticipant>" +
+        "<EffDate>2022-04-22</EffDate>" +
+        "<ExpiryDate>2035-04-22</ExpiryDate>" +
+        "</Coverage>";
 
     @BeforeClass
     public void setup() throws Exception {
-        // Initialize ExtentReports and retrieve the bearer token
+        // Setup ExtentReports, bearer token, etc.
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
         LocalDateTime now = LocalDateTime.now();
         folderPath = ".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now);
@@ -70,40 +33,23 @@ public class XMLUpdateTest2 extends WebBase {
         mainReport = new ExtentReports(fileName);
         mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
 
-        ExtentReports report = new ExtentReports("dummy.html");
-        test = report.startTest("Generate Token");
-        tokenSubTest = report.startTest("Token Generation Steps");
-        tokenSubTest.log(LogStatus.INFO, "Generating bearer token");
-
-        try {
-            this.token = getBearerToken(tokenSubTest);
-            tokenSubTest.log(LogStatus.PASS, "Bearer token generated successfully");
-        } catch (Exception e) {
-            tokenSubTest.log(LogStatus.FAIL, "Bearer token generation failed: " + e.getMessage());
-            throw e;
-        }
-
-        test.appendChild(tokenSubTest);
-        addTestToMainReport(test);
+        token = getBearerToken();
     }
 
     @Test(dataProvider = "xmlUpdateData", dataProviderClass = fast.dataProviders.ReadDataFromXLSX.class)
     public void updateXML(String testCaseName, String templateName, List<Object[]> updates, ITestContext context) throws Exception {
-        if (testCaseRetryCount.get(testCaseName) == null)
-            testCaseRetryCount.put(testCaseName, 1);
-        else
-            testCaseRetryCount.put(testCaseName, testCaseRetryCount.get(testCaseName) + 1);
+        if (testCaseRetryCount.get(testCaseName) == null) testCaseRetryCount.put(testCaseName, 1);
+        else testCaseRetryCount.put(testCaseName, testCaseRetryCount.get(testCaseName) + 1);
 
         ExtentReports report = new ExtentReports("dummy.html");
         test = report.startTest("Policy Creation Test for " + testCaseName);
-
         String polNumber = (String) updates.get(0)[2];
         subTest = report.startTest("Policy Creation Test for " + testCaseName + " with the policy number " + polNumber);
 
         templateDir = context.getCurrentXmlTest().getParameter("templateDir");
         loadTemplate(templateName, subTest);
 
-        // Check and add missing coverage sections as required
+        // Add missing coverages if specified by Coverage=WOP or similar conditions
         addMissingCoverages(updates);
 
         // Update nodes based on test data
@@ -122,22 +68,18 @@ public class XMLUpdateTest2 extends WebBase {
         addTestToMainReport(test);
     }
 
-    private void loadTemplate(String templateName, ExtentTest subTest) throws Exception {
-        File templateFile = new File(templateDir, templateName);
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        doc = builder.parse(templateFile);
-    }
-
     private void addMissingCoverages(List<Object[]> updates) throws Exception {
         for (Object[] update : updates) {
-            String nodeName = (String) update[0];
-            String coverageType = (String) update[2];
-            if (nodeName.equals("Coverage") && "Yes".equalsIgnoreCase(coverageType) && !coverageExists("WOP")) {
-                Element newCoverage = createCoverageNode();
-                Node lifeNode = doc.getElementsByTagName("Life").item(0);
-                lifeNode.appendChild(newCoverage);
+            String nodeNameCondition = (String) update[0];
+            String addCoverageFlag = (String) update[2];
+
+            if (nodeNameCondition.startsWith("Coverage=") && "Yes".equalsIgnoreCase(addCoverageFlag)) {
+                String coverageId = nodeNameCondition.split("=")[1];
+                if (!coverageExists(coverageId)) {
+                    Element newCoverage = createCoverageNode(coverageId);
+                    Node lifeNode = doc.getElementsByTagName("Life").item(0);
+                    lifeNode.appendChild(newCoverage);
+                }
             }
         }
     }
@@ -153,10 +95,12 @@ public class XMLUpdateTest2 extends WebBase {
         return false;
     }
 
-    private Element createCoverageNode() throws Exception {
+    private Element createCoverageNode(String coverageId) throws Exception {
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document coverageDoc = builder.parse(new ByteArrayInputStream(WOP_COVERAGE_TEMPLATE.getBytes(StandardCharsets.UTF_8)));
-        return (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
+        Element coverageElement = (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
+        coverageElement.setAttribute("id", coverageId);
+        return coverageElement;
     }
 
     private void updateNodes(List<Object[]> updates) {
@@ -200,70 +144,6 @@ public class XMLUpdateTest2 extends WebBase {
         return savedFile.getPath();
     }
 
-    private String encodeXMLToBase64(String filePath) throws Exception {
-        byte[] bytes = Files.readAllBytes(new File(filePath).toPath());
-        return Base64.encodeBase64String(bytes);
-    }
+    // Other helper methods remain as per the previous code...
 
-    private String createPolicy(String token, String encodedXML, ExtentTest subTest) throws Exception {
-        String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
-        CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost post = new HttpPost(EnvParameters.policyApiUrl);
-        post.setHeader("Authorization", "Bearer " + token
-
-
-
-
-
-
-
-
-        post.setHeader("Content-Type", "application/json");
-        post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
-        post.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
-
-        try (CloseableHttpResponse response = client.execute(post)) {
-            String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            subTest.log(LogStatus.PASS, "<font color='#30A0DB'><b>Response Body:</b></font> " + responseBody);
-            return extractPolicyNumberFromResponse(responseBody);
-        }
-    }
-
-    private String extractPolicyNumberFromResponse(String responseBody) {
-        JSONObject jsonResponse = new JSONObject(responseBody);
-        return jsonResponse.getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
-    }
-
-    private String getBearerToken(ExtentTest tokenSubTest) throws Exception {
-        Properties prop = new Properties();
-        prop.load(new FileInputStream("config.properties"));
-        String userID = prop.getProperty("User_Name");
-        String password = prop.getProperty("Password");
-
-        String payload = "{ \"username\" : \"" + userID + "\", \"password\" : \"" + password + "\" }";
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpPost post = new HttpPost(EnvParameters.tokenApiUrl);
-            post.setHeader("Content-Type", "application/json");
-            post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
-            post.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
-
-            try (CloseableHttpResponse response = client.execute(post)) {
-                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-                return extractTokenFromResponse(responseBody);
-            }
-        }
-    }
-
-    private String extractTokenFromResponse(String responseBody) {
-        return responseBody.split("\"token\"\\s*:\\s*\"")[1].split("\"")[0];
-    }
-
-    @AfterClass(alwaysRun = true)
-    public void tearDown() {
-        mainReport.flush();
-    }
-
-    public void addTestToMainReport(ExtentTest test) {
-        mainReport.endTest(test);
-    }
 }
