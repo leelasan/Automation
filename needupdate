@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -44,7 +45,30 @@ public class XMLUpdateTest extends WebBase {
     private String token;
     public ExtentTest subTest = null;
     public ExtentTest test = null;
-    
+
+    // Define the WOP coverage template as a constant string
+    private static final String WOP_COVERAGE_TEMPLATE = 
+        "<Coverage id=\"WOP\">" +
+        "<ProductCode>WOP</ProductCode>" +
+        "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+        "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+        "<LifeParticipant PartyID=\"\">" +
+        "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+        "<TobaccoPremiumBasis tc=\"1\">Smoker</TobaccoPremiumBasis>" +
+        "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+        "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+        "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+        "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+        "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+        "<ExtraRatingFactor>1</ExtraRatingFactor>" +
+        "</LifeParticipant>" +
+        "<RiderInsured>Primary Insured</RiderInsured>" +
+        "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+        "<LevelPremiumPeriod/>" +
+        "<EffDate>2022-04-22</EffDate>" +
+        "<ExpiryDate>2035-04-22</ExpiryDate>" +
+        "</Coverage>";
+
     @BeforeClass
     public void setup() throws Exception {
         // Initialize ExtentReports and other setup code here...
@@ -121,10 +145,12 @@ public class XMLUpdateTest extends WebBase {
     }
 
     private Element createCoverageNode(String coverageId) throws Exception {
-        // Load the WOP template as in the needupdate file
-        String template = "<Coverage id=\"WOP\">" + /* insert the XML template here */ "</Coverage>";
+        // Create a new Document to hold the WOP coverage template
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        String template = coverageId.equals("WOP") ? WOP_COVERAGE_TEMPLATE : ""; // Add other templates if needed
         Document coverageDoc = builder.parse(new ByteArrayInputStream(template.getBytes(StandardCharsets.UTF_8)));
+        
+        // Import the coverage node from the template into the main document
         Element coverageElement = (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
         coverageElement.setAttribute("id", coverageId);
         return coverageElement;
@@ -151,12 +177,25 @@ public class XMLUpdateTest extends WebBase {
         }
     }
 
-    private boolean matchesCondition(Element element, String condition) {
-        if (condition.isEmpty()) {
+   private boolean matchesCondition(Element element, String condition) {
+    if (condition.isEmpty()) {
+        return true;
+    }
+
+    String conditionAttribute = "id";
+    String conditionValue = condition;
+
+    Node currentNode = element;
+    while (currentNode != null && currentNode.getNodeType() == Node.ELEMENT_NODE) {
+        Element currentElement = (Element) currentNode;
+        if (currentElement.hasAttribute(conditionAttribute)
+                && currentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
             return true;
         }
-        return element.getAttribute("id").equals(condition);
+        currentNode = currentNode.getParentNode();
     }
+    return false;
+}
 
     private String saveXML(String fileName, ExtentTest subTest) throws TransformerException {
         File outputDir = new File("output");
@@ -187,7 +226,7 @@ public class XMLUpdateTest extends WebBase {
     private String createPolicy(String token, String encodedXML, ExtentTest subTest) throws Exception {
         String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
         CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost post = new HttpPost(EnvParameters.policyApiUrl);
+        HttpPost post =         new HttpPost(EnvParameters.policyApiUrl);
         post.setHeader("Authorization", "Bearer " + token);
         post.setHeader("Content-Type", "application/json");
         post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
@@ -204,3 +243,5 @@ public class XMLUpdateTest extends WebBase {
         return jsonResponse.getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
     }
 }
+
+
