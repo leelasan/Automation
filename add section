@@ -1,0 +1,121 @@
+// ADB coverage template as a String
+private static final String ADB_COVERAGE_TEMPLATE = 
+    "<Coverage id=\"ADB\">" +
+        "<ProductCode>ADB</ProductCode>" +
+        "<LifeCovTypeCode>ADB_Coverage</LifeCovTypeCode>" +
+        "<BenefitCoverage>Additional Death Benefit</BenefitCoverage>" +
+        "<LifeParticipant PartyID=\"\">" +
+            "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+            "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
+            "<UnderwritingClass tc=\"111\">NS7_07</UnderwritingClass>" +
+            "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+            "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+            "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+            "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+            "<ExtraRatingFactor>0</ExtraRatingFactor>" +
+        "</LifeParticipant>" +
+        "<RiderInsured>Primary Insured</RiderInsured>" +
+        "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+        "<LevelPremiumPeriod/>" +
+        "<EffDate>2023-01-01</EffDate>" +
+        "<ExpiryDate>2106-12-28</ExpiryDate>" +
+    "</Coverage>";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@Test(dataProvider = "xmlUpdateData", dataProviderClass = fast.dataProviders.ReadDataFromXLSX.class)
+public void updateXML(String testCaseName, String templateName, List<Object[]> updates, ITestContext context) throws Exception {
+    // Other initialization code
+
+    // Load the XML template
+    templateDir = context.getCurrentXmlTest().getParameter("templateDir");
+    loadTemplate(templateName, subTest);
+
+    for (Object[] update : updates) {
+        String nodeName = (String) update[0];
+        String attributeValue = (String) update[1];
+        String nodeValue = (String) update[2];
+        String condition = (String) update[3];
+
+        // Check if "Coverage" with id="ADB" exists
+        NodeList coverageList = doc.getElementsByTagName("Coverage");
+        boolean adbCoverageExists = IntStream.range(0, coverageList.getLength())
+            .mapToObj(coverageList::item)
+            .anyMatch(node -> node instanceof Element && "ADB".equals(((Element) node).getAttribute("id")));
+
+        // If ADB Coverage does not exist, add it
+        if (!adbCoverageExists && "ADB".equals(nodeName)) {
+            addCoverageSection();
+        }
+
+        NodeList nodeList = doc.getElementsByTagName(nodeName);
+        IntStream.range(0, nodeList.getLength())
+            .mapToObj(nodeList::item)
+            .filter(node -> node instanceof Element)
+            .map(node -> (Element) node)
+            .filter(element -> matchesCondition(element, condition))
+            .forEach(element -> {
+                if (attributeValue != null && !attributeValue.isEmpty()) {
+                    element.setAttribute("tc", attributeValue);
+                    subTest.log(LogStatus.PASS, "Updated attribute TypeCode of " + nodeName + " with value: " + attributeValue);
+                }
+                if (nodeValue.isEmpty()) {
+                    element.setTextContent("");
+                    subTest.log(LogStatus.PASS, "Cleared value of " + nodeName);
+                } else {
+                    element.setTextContent(nodeValue);
+                    subTest.log(LogStatus.PASS, "Updated " + nodeName + " with value: " + nodeValue);
+                }
+            });
+    }
+
+    // Save the modified XML
+    saveXML(polNumber + "_updated.xml", subTest);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private void addCoverageSection() throws Exception {
+    // Parse the ADB coverage template into a new XML Document
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    Document adbCoverageDoc = builder.parse(new ByteArrayInputStream(ADB_COVERAGE_TEMPLATE.getBytes(StandardCharsets.UTF_8)));
+
+    // Import the ADB coverage node into the main document
+    Node adbCoverageNode = doc.importNode(adbCoverageDoc.getDocumentElement(), true);
+
+    // Insert the new Coverage node in the appropriate location
+    NodeList lifeNodes = doc.getElementsByTagName("Life");
+    if (lifeNodes.getLength() > 0) {
+        lifeNodes.item(0).appendChild(adbCoverageNode);
+    }
+}
