@@ -1,31 +1,76 @@
-// ... [Remaining class setup and imports]
+package test.fast.CreatePolicyforLife;
+
+import com.nyl.base.WebBase;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ContentType;
+import org.json.JSONObject;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
+import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.IntStream;
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.LogStatus;
+import com.relevantcodes.extentreports.model.ITest;
+import com.relevantcodes.extentreports.model.Log;
 
 public class XMLUpdateTest2 extends WebBase {
+
     private Document doc;
     public static ExtentReports mainReport;
     public HashMap<String, Integer> testCaseRetryCount = new HashMap<>();
     public String folderPath;
     public String templateDir;
     private String token;
+    public ExtentTest subTest = null;
+    public ExtentTest test = null;
+    public ExtentTest tokenSubTest = null;
 
     private static final String WOP_COVERAGE_TEMPLATE =
-        "<Coverage id=\"WOP\">" +
-        "<ProductCode>WOP</ProductCode>" +
-        "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
-        "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
-        "<LifeParticipant PartyID=\"\">" +
-        "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
-        "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
-        "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
-        "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
-        "</LifeParticipant>" +
-        "<EffDate>2022-04-22</EffDate>" +
-        "<ExpiryDate>2035-04-22</ExpiryDate>" +
-        "</Coverage>";
+            "<Coverage id=\"WOP\">" +
+            "<ProductCode>WOP</ProductCode>" +
+            "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+            "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+            "<LifeParticipant PartyID=\"\">" +
+            "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+            "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
+            "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+            "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+            "</LifeParticipant>" +
+            "<EffDate>2022-04-22</EffDate>" +
+            "<ExpiryDate>2035-04-22</ExpiryDate>" +
+            "</Coverage>";
 
     @BeforeClass
     public void setup() throws Exception {
-        // Setup ExtentReports, bearer token, etc.
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
         LocalDateTime now = LocalDateTime.now();
         folderPath = ".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now);
