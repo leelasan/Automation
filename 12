@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><TXLife xmlns="http://ACORD.org/Standards/Life/2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><UserAuthRequest><UserLoginName>iPipeline</UserLoginName><UserPswd><CryptType>NONE</CryptType><Pswd/></UserPswd><VendorApp><VendorName VendorCode="220">iPipeline</VendorName><AppName>iGo Forms</AppName></VendorApp></UserAuthRequest><TXLifeRequest PrimaryObjectID="Application_Holding"><TransRefGUID/><TransType tc="103">New Business Submission</TransType><TransExeDate>2021-12-28</TransExeDate><TransExeTime>11:59:59.0000000-05:00</TransExeTime><TransMode tc="2">Original Request</TransMode><TestIndicator tc="1">True</TestIndicator><OLifE Version="2.26.00"><SourceInfo><CreationDate>2024-08-27</CreationDate><CreationTime>11:59:59.0000000-05:00</CreationTime><SourceInfoName>iPipeline iGo</SourceInfoName><SourceInfoDescription/><SourceInfoComment/></SourceInfo><Holding id="Application_Holding"><HoldingTypeCode tc="2">Policy</HoldingTypeCode><Policy id="Application_Policy"><PolNumber>03_AR_CWL_Test_Auto_12</PolNumber><LineOfBusiness tc="1">Life</LineOfBusiness><ProductType tc="1">Whole Life Insurance</ProductType><CarrierCode>NYL</CarrierCode><PlanName>Custom Whole Life AD 121</PlanName><ProductCode>NYL_CWL</ProductCode><RateClass tc="111">NS7_07</RateClass><PolicyStatus tc="8">Pending</PolicyStatus><IssueNation tc="1">United States of America</IssueNation><Jurisdiction tc="38">NC</Jurisdiction><EffDate>2023-01-01</EffDate><PaymentMode tc="4">M</PaymentMode><PaymentMethod tc="7">EFT</PaymentMethod><PaymentDraftDay/><AccountNumber>243782990</AccountNumber><RoutingNumber>071000013</RoutingNumber><AcctHolderName>Bonnie K Baker</AcctHolderName><BankAcctType tc="2">Checking Account</BankAcctType><CardVerificationNum/><CreditCardExpDate/><AnnuityPolicyOption/><ApplicationInfo><IsDraftInitialPremium tc="2">False</IsDraftInitialPremium><ExchangeBasis1035/></ApplicationInfo><Life><ValuePerUnit/><FaceAmt>450000</FaceAmt><NonFortProv tc="3"/><DivType tc="27"/><Coverage id="Base_Coverage"><CoverageSysKey VendorCode="451"/><IndicatorCode tc="1">Base</IndicatorCode><DeathBenefitOptType tc=""/><EquivalentAge>42</EquivalentAge><ModalPremAmt/><EffDate>2023-01-01</EffDate><DurationDesign>PP29</DurationDesign><LifeParticipant PartyID="Party_PrimaryInsured" id="PrimaryInsured_Life_Participant"><LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode><TobaccoPremiumBasis tc="1">Non-Smoker</TobaccoPremiumBasis><UnderwritingClass tc="101">NS1_01</UnderwritingClass><PermTableRating tc="STD">STD</PermTableRating><TempFlatExtraAmt>2.85</TempFlatExtraAmt><TempFlatExtraDuration>5</TempFlatExtraDuration><PermFlatExtraAmt>0</PermFlatExtraAmt></LifeParticipant><ExpiryDate/><OLifEExtension VendorCode="029"><AllLifePlanType>Payment Period - 29 Years</AllLifePlanType></OLifEExtension></Coverage><LifeUSA><DefLifeInsMethod tc="1"/></LifeUSA><Coverage id="PUAR"><ProductCode>PUAR</ProductCode><LifeCovTypeCode>PUAR_ModalPrem</LifeCovTypeCode><BenefitCoverage>Base Coverage</BenefitCoverage><LifeParticipant PartyID=""><LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode><TobaccoPremiumBasis tc="1">Non-Smoker</TobaccoPremiumBasis><UnderwritingClass tc="111">NS7_07</UnderwritingClass><PermTableRating tc="STD">STD</PermTableRating><TempFlatExtraAmt>0</TempFlatExtraAmt><TempFlatExtraDuration>0</TempFlatExtraDuration><PermFlatExtraAmt>0</PermFlatExtraAmt><ExtraRatingFactor>0</ExtraRatingFactor></LifeParticipant><RiderInsured>Primary Insured</RiderInsured><OptionNumberOfUnits>0</OptionNumberOfUnits><LevelPremiumPeriod/><EffDate>2023-01-01</EffDate><ExpiryDate>2106-12-28</ExpiryDate></Coverage></Life><ApplicationInfo><TrackingIDVendorCode>220</TrackingIDVendorCode><ApplicationType tc="1">New Application</ApplicationType><ApplicationJurisdiction tc="38">NC</ApplicationJurisdiction><ApplicationCountry tc="1">USA</ApplicationCountry><SignedDate>2021-12-28</SignedDate><SubmissionType tc="2">Electronic</SubmissionType><ApplicationCollectionDate>2021-12-28</ApplicationCollectionDate><ReplacementInd tc="0">False</ReplacementInd><IllustrationProvidedInd tc="1">True</IllustrationProvidedInd><BackDateType tc="0">No</BackDateType><CashOnDeliveryInd tc="1">True</CashOnDeliveryInd><SignatureInfo><SignatureRoleCode tc="27">Annuitant</SignatureRoleCode><SignatureDate>2021-12-28</SignatureDate><SignatureCity>Mukwonago</SignatureCity><SignatureState tc="38">NC</SignatureState><SignatureText>eSigned by</SignatureText></SignatureInfo></ApplicationInfo></Policy></Holding><Party id="Party_PrimaryInsured"><PartyTypeCode tc="1">Person</PartyTypeCode><GovtID>101010100</GovtID><GovtIDTC tc="1">SSN</GovtIDTC><Person><FirstName>BFirst1Auto1</FirstName><MiddleName>K</MiddleName><LastName>BLast1</LastName><Gender tc="2">F</Gender><BirthDate>2000-01-01</BirthDate><Age>22</Age><Citizenship tc="1">USA</Citizenship><BirthCountry tc="1">United States of America</BirthCountry><BirthJurisdictionTC tc="38">NC</BirthJurisdictionTC><MarStat tc=""/><OLifEExtension VendorCode="220"><TobaccoStat>Non-Smoker</TobaccoStat><PIIsIRSWithholding>No</PIIsIRSWithholding><PIUseTobacco>No</PIUseTobacco><PICigarUse>None</PICigarUse><PIUsedDifferentName>No</PIUsedDifferentName></OLifEExtension></Person><Address><AddressTypeCode tc="2">BU</AddressTypeCode><Line1>Mukwonago</Line1><City>Mukwonago</City><AddressState>NC</AddressState><AddressStateTC tc="38">NC</AddressStateTC><Zip>53149</Zip><AddressCountryTC tc="1">USA</AddressCountryTC><PrefAddr tc="1">True</PrefAddr><AddressValidInd tc="1">True</AddressValidInd></Address></Party><Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_PrimaryInsured" id="Relation_Owner"><OriginatingObjectType tc="4">Holding</OriginatingObjectType><RelatedObjectType tc="6">Party</RelatedObjectType><RelationRoleCode tc="8">Owner</RelationRoleCode></Relation><Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_PrimaryInsured" id="Relation_Payor"><OriginatingObjectType tc="4">Holding</OriginatingObjectType><RelatedObjectType tc="6">Party</RelatedObjectType><RelationRoleCode tc="31">Payor</RelationRoleCode></Relation><Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_PrimaryInsured" id="Relation_PrimaryParty"><OriginatingObjectType tc="4">Holding</OriginatingObjectType><RelatedObjectType tc="6">Party</RelatedObjectType><RelationRoleCode tc="32">Insured</RelationRoleCode></Relation><Party id="Party_Agent_1">
+<PartyTypeCode tc="1">Person</PartyTypeCode>
+<FullName>Lou M Levis</FullName>
+<Person/>
+<Producer>
+<CarrierAppointment>
+<CompanyProducerID>Ind000008</CompanyProducerID>
+<CarrierApptTypeCode tc="1">Agent</CarrierApptTypeCode>
+</CarrierAppointment>
+</Producer>
+</Party>
+<Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_Agent_1" id="Relation_Application_Agent_1">
+<OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+<RelatedObjectType tc="6">Party</RelatedObjectType>
+<RelationRoleCode tc="37">Primary Writing Agent</RelationRoleCode>
+<InterestPercent>100</InterestPercent>
+</Relation>
+<Party id="Party_Agent_1">
+<PartyTypeCode tc="1">Person</PartyTypeCode>
+<FullName>Lou M Lev</FullName>
+<Person/>
+<Producer>
+<CarrierAppointment>
+<CompanyProducerID>Ind000008</CompanyProducerID>
+<CarrierApptTypeCode tc="1">Agent</CarrierApptTypeCode>
+</CarrierAppointment>
+</Producer>
+</Party>
+<Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_Agent_1" id="Relation_Application_Agent_1">
+<OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+<RelatedObjectType tc="6">Party</RelatedObjectType>
+<RelationRoleCode tc="37">Primary Writing Agent</RelationRoleCode>
+<InterestPercent>100</InterestPercent>
+</Relation>
+<Party id="Party_Agent_1">
+<PartyTypeCode tc="1">Person</PartyTypeCode>
+<FullName>Louis M Lev</FullName>
+<Person/>
+<Producer>
+<CarrierAppointment>
+<CompanyProducerID>Ind000008</CompanyProducerID>
+<CarrierApptTypeCode tc="1">Agent</CarrierApptTypeCode>
+</CarrierAppointment>
+</Producer>
+</Party>
+<Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_Agent_1" id="Relation_Application_Agent_1">
+<OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+<RelatedObjectType tc="6">Party</RelatedObjectType>
+<RelationRoleCode tc="37">Primary Writing Agent</RelationRoleCode>
+<InterestPercent>100</InterestPercent>
+</Relation><Party id="Party_Beneficiary_1"><PartyTypeCode tc="1">Person</PartyTypeCode><FullName>KBen1 Q SBenLast1</FullName><GovtID>303030300</GovtID><GovtIDTC tc="1">Social Security Number US</GovtIDTC><Person><FirstName>KBen1Auto1</FirstName><MiddleName>Q</MiddleName><LastName>SBenLast1</LastName><Gender tc="2">F</Gender><EffDate>2023-01-01</EffDate><BirthDate>1982-11-10</BirthDate><RelationToInsured>Sibling</RelationToInsured></Person><Address><AddressTypeCode tc="1">Residence</AddressTypeCode><Line1>College Station</Line1><Line2/><City>College Station</City><AddressStateTC tc="38">NC</AddressStateTC><Zip>72053</Zip><AddressCountryTC tc="1">USA</AddressCountryTC><PrefAddr tc="1">True</PrefAddr></Address></Party><Relation OriginatingObjectID="Application_Holding" RelatedObjectID="Party_Beneficiary_1" id="Relation_Beneficiary_1"><RelationRoleCode tc="34">Principal Beneficiary 1</RelationRoleCode><Sequence>1</Sequence><InterestPercent>100</InterestPercent><BeneficiaryCoverageType>Base Coverage</BeneficiaryCoverageType><KeyedValue><KeyName>RelationToInsured</KeyName><KeyValue>Sibling</KeyValue></KeyedValue></Relation><Relation OriginatingObjectID="Party_PrimaryInsured" RelatedObjectID="Party_Beneficiary_1" id="Relation_Beneficiary_1"><RelatedObjectType tc="6">Party</RelatedObjectType><RelationDescription tc="902">Child</RelationDescription></Relation></OLifE></TXLifeRequest></TXLife>
