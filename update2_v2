@@ -1,3 +1,49 @@
+package test.fast.CreatePolicyforLife;
+
+import com.nyl.base.WebBase;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ContentType;
+import org.json.JSONObject;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
+import org.w3c.dom.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.IntStream;
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+import com.relevantcodes.extentreports.model.ITest;
+import com.relevantcodes.extentreports.model.Log;
+
 public class XMLUpdateTest2 extends WebBase {
 
     private Document doc;
@@ -11,26 +57,26 @@ public class XMLUpdateTest2 extends WebBase {
     public ExtentTest tokenSubTest = null;
 
     private static final String WOP_COVERAGE_TEMPLATE =
-        "<Coverage id=\"WOP\">" +
-        "<ProductCode>WOP</ProductCode>" +
-        "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
-        "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
-        "<LifeParticipant PartyID=\"\">" +
-        "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
-        "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
-        "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
-        "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
-        "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
-        "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
-        "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
-        "<ExtraRatingFactor>1</ExtraRatingFactor>" +
-        "</LifeParticipant>" +
-        "<RiderInsured>Primary Insured</RiderInsured>" +
-        "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
-        "<LevelPremiumPeriod/>" +
-        "<EffDate>2022-04-22</EffDate>" +
-        "<ExpiryDate>2035-04-22</ExpiryDate>" +
-        "</Coverage>";
+            "<Coverage id=\"WOP\">" +
+            "<ProductCode>WOP</ProductCode>" +
+            "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+            "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+            "<LifeParticipant PartyID=\"\">" +
+            "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+            "<TobaccoPremiumBasis tc=\"1\">Smoker</TobaccoPremiumBasis>" +
+            "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+            "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+            "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+            "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+            "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+            "<ExtraRatingFactor>1</ExtraRatingFactor>" +
+            "</LifeParticipant>" +
+            "<RiderInsured>Primary Insured</RiderInsured>" +
+            "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+            "<LevelPremiumPeriod/>" +
+            "<EffDate>2022-04-22</EffDate>" +
+            "<ExpiryDate>2035-04-22</ExpiryDate>" +
+            "</Coverage>";
 
     @BeforeClass
     public void setup() throws Exception {
@@ -55,10 +101,10 @@ public class XMLUpdateTest2 extends WebBase {
         templateDir = context.getCurrentXmlTest().getParameter("templateDir");
         loadTemplate(templateName, subTest);
 
-        // Step 1: Add missing coverage sections based on flags in test data
-        addMissingCoverages(updates);
+        // Add missing coverages if specified by Coverage=WOP or similar conditions
+        addAndUpdateCoverages(updates);
 
-        // Step 2: Update all nodes, including any newly added coverages, based on test data
+        // Update nodes based on test data
         updateNodes(updates);
 
         // Save and submit the XML
@@ -73,7 +119,7 @@ public class XMLUpdateTest2 extends WebBase {
         test.appendChild(subTest);
         addTestToMainReport(test);
     }
-
+    
     private void loadTemplate(String templateName, ExtentTest subTest) throws Exception {
         File templateFile = new File(templateDir, templateName);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -82,17 +128,21 @@ public class XMLUpdateTest2 extends WebBase {
         doc = builder.parse(templateFile);
     }
 
-    private void addMissingCoverages(List<Object[]> updates) throws Exception {
+    private void addAndUpdateCoverages(List<Object[]> updates) throws Exception {
         for (Object[] update : updates) {
             String nodeNameCondition = (String) update[0];
             String addCoverageFlag = (String) update[2];
 
             if (nodeNameCondition.startsWith("Coverage=") && "Yes".equalsIgnoreCase(addCoverageFlag)) {
                 String coverageId = nodeNameCondition.split("=")[1];
+                
                 if (!coverageExists(coverageId)) {
                     Element newCoverage = createCoverageNode(coverageId);
                     Node lifeNode = doc.getElementsByTagName("Life").item(0);
                     lifeNode.appendChild(newCoverage);
+
+                    // Update the new coverage node based on test data immediately
+                    updateNodesForCoverage(updates, coverageId);
                 }
             }
         }
@@ -117,6 +167,29 @@ public class XMLUpdateTest2 extends WebBase {
         return coverageElement;
     }
 
+    private void updateNodesForCoverage(List<Object[]> updates, String coverageId) {
+        for (Object[] update : updates) {
+            String nodeName = (String) update[0];
+            String attributeValue = (String) update[1];
+            String nodeValue = (String) update[2];
+            String condition = (String) update[3];
+
+            // Match only if the condition matches the new coverage
+            if (condition.equals(coverageId)) {
+                NodeList nodeList = doc.getElementsByTagName(nodeName);
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    Element element = (Element) nodeList.item(i);
+                    if (matchesCondition(element, condition)) {
+                        if (attributeValue != null && !attributeValue.isEmpty()) {
+                            element.setAttribute("tc", attributeValue);
+                        }
+                        element.setTextContent(nodeValue);
+                    }
+                }
+            }
+        }
+    }
+
     private void updateNodes(List<Object[]> updates) {
         for (Object[] update : updates) {
             String nodeName = (String) update[0];
@@ -126,7 +199,7 @@ public class XMLUpdateTest2 extends WebBase {
 
             NodeList nodeList = doc.getElementsByTagName(nodeName);
             for (int i = 0; i < nodeList.getLength(); i++) {
-                Element element = (Element) nodeList.item(i);
+                                Element element = (Element) nodeList.item(i);
                 if (matchesCondition(element, condition)) {
                     if (attributeValue != null && !attributeValue.isEmpty()) {
                         element.setAttribute("tc", attributeValue);
@@ -157,15 +230,15 @@ public class XMLUpdateTest2 extends WebBase {
 
         return savedFile.getPath();
     }
-    
+
     private String encodeXMLToBase64(String filePath) throws Exception {
-		File file = new File(filePath);
-		FileInputStream fis = new FileInputStream(file);
-		byte[] bytes = new byte[(int) file.length()];
-		fis.read(bytes);
-		fis.close();
-		return Base64.encodeBase64String(bytes);
-	}
+        File file = new File(filePath);
+        FileInputStream fis = new FileInputStream(file);
+        byte[] bytes = new byte[(int) file.length()];
+        fis.read(bytes);
+        fis.close();
+        return Base64.encodeBase64String(bytes);
+    }
 
     private String createPolicy(String token, String encodedXML, ExtentTest subTest) throws Exception {
         String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
@@ -188,7 +261,7 @@ public class XMLUpdateTest2 extends WebBase {
         return jsonResponse.getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
     }
 
-        private String getBearerToken(ExtentTest tokenSubTest) throws Exception {
+    private String getBearerToken(ExtentTest tokenSubTest) throws Exception {
         Properties prop = new Properties();
         prop.load(new FileInputStream("config.properties"));
         String userID = prop.getProperty("User_Name");
@@ -222,7 +295,7 @@ public class XMLUpdateTest2 extends WebBase {
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        localTest.log(LogStatus.ERROR, "Exception Occured and Execution Stopped.\n" + e.getLocalizedMessage()
+        localTest.log(LogStatus.ERROR, "Exception Occurred and Execution Stopped.\n" + e.getLocalizedMessage()
                 + localTest.addScreenCapture(screenshotFileName));
     }
 
@@ -251,6 +324,8 @@ public class XMLUpdateTest2 extends WebBase {
             parentTest.appendChild(child);
             mainReport.endTest(child);
         }
+
         mainReport.endTest(parentTest);
     }
 }
+
