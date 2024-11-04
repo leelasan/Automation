@@ -1,0 +1,212 @@
+package test.fast.CreatePolicyforLife;
+
+import com.nyl.base.WebBase;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ContentType;
+import org.json.JSONObject;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
+import org.w3c.dom.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.IntStream;
+
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
+public class XMLUpdateTest2 extends WebBase {
+
+    private Document doc;
+    public static ExtentReports mainReport;
+    public HashMap<String, Integer> testCaseRetryCount = new HashMap<>();
+    public String folderPath;
+    public String templateDir;
+    private String token;
+
+    public ExtentTest subTest = null;
+    public ExtentTest test = null;
+    public ExtentTest tokenSubTest = null;
+
+    @BeforeClass
+    public void setup() throws Exception {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss"); 
+        LocalDateTime now = LocalDateTime.now(); 
+        folderPath = ".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now); 
+        String fileName = folderPath + "/CreatePolicyWithAPI.html";
+        mainReport = new ExtentReports(fileName); 
+        mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
+        
+        ExtentReports report = new ExtentReports("dummy.html");
+        test = report.startTest("Generate Token"); 
+        tokenSubTest = report.startTest("Token Generation Steps"); 
+        tokenSubTest.log(LogStatus.INFO,"Generating bearer token");
+
+        try {
+            this.token = getBearerToken(tokenSubTest);
+            tokenSubTest.log(LogStatus.PASS, "Bearer token generated successfully");
+            tokenSubTest.log(LogStatus.INFO,"<font color='#30A0DB'><b>token: </b></font>" + this.token);
+
+        } catch (Exception e) {
+            tokenSubTest.log(LogStatus.FAIL, "Bearer token generation failed: " + e.getMessage());
+            throw e;
+        }
+
+        test.appendChild(tokenSubTest);
+        addTestToMainReport(test);
+    }
+
+    @Test(dataProvider = "xmlUpdateData", dataProviderClass = fast.dataProviders.ReadDataFromXLSX.class)
+    public void updateXML(String testCaseName, String templateName, List<Object[]> updates, ITestContext context) throws Exception {
+
+        if (testCaseRetryCount.get(testCaseName) == null)
+            testCaseRetryCount.put(testCaseName, 1);
+        else
+            testCaseRetryCount.put(testCaseName, testCaseRetryCount.get(testCaseName) + 1);
+
+        try {
+            ExtentReports report = new ExtentReports("dummy.html");
+            test = report.startTest("Policy Creation Test for " + testCaseName);
+
+            String polNumber = (String) updates.get(0)[2];
+            subTest = report.startTest("Policy Creation Test for " + testCaseName + " with the policy number " + polNumber);
+
+            templateDir = context.getCurrentXmlTest().getParameter("templateDir");
+            loadTemplate(templateName, subTest);
+
+            // Track which coverages to add
+            for (Object[] update : updates) {
+                String header = (String) update[0];  // e.g., "ProductCode#LBR"
+                String[] parts = header.split("#");  // Split to get nodeName and coverageType
+                String nodeName = parts[0];          // e.g., "ProductCode"
+                String coverageType = parts.length > 1 ? parts[1] : "";  // e.g., "LBR" if present
+                String nodeValue = (String) update[2];
+
+                // Check and add the coverage section if missing
+                if ("ProductCode".equals(nodeName) && !coverageType.isEmpty()) {
+                    if (!coverageExists(coverageType)) {
+                        addCoverageSection(coverageType, updates);
+                        subTest.log(LogStatus.INFO, "Added missing " + coverageType + " Coverage section");
+                    }
+                }
+            }
+
+            // Update existing nodes based on test data
+            for (Object[] update : updates) {
+                String header = (String) update[0];
+                String[] parts = header.split("#");
+                String nodeName = parts[0];
+                String coverageType = parts.length > 1 ? parts[1] : "";
+                String attributeValue = (String) update[1];
+                String nodeValue = (String) update[2];
+
+                NodeList nodeList = doc.getElementsByTagName(nodeName);
+                IntStream.range(0, nodeList.getLength())
+                    .mapToObj(nodeList::item)
+                    .filter(node -> node instanceof Element)
+                    .map(node -> (Element) node)
+                    .filter(element -> matchesCondition(element, coverageType))
+                    .forEach(element -> {
+                        if (attributeValue != null && !attributeValue.isEmpty()) {
+                            element.setAttribute("tc", attributeValue);
+                            subTest.log(LogStatus.PASS, "Updated attribute TypeCode of " + nodeName + " with value: " + attributeValue);
+                        }
+                        if (nodeValue.isEmpty()) {
+                            element.setTextContent("");
+                            subTest.log(LogStatus.PASS, "Cleared value of " + nodeName);
+                        } else {
+                            element.setTextContent(nodeValue);
+                            subTest.log(LogStatus.PASS, "Updated " + nodeName + " with value: " + nodeValue);
+                        }
+                    });
+            }
+
+            saveXML(polNumber + "_updated.xml", subTest);
+
+            String encodedXML = encodeXMLToBase64(new File("output", polNumber + "_updated.xml").getPath());
+            subTest.log(LogStatus.PASS, "Encoded XML to Base64");
+            String policyNumber = createPolicy(token, encodedXML, subTest);
+            subTest.log(LogStatus.PASS, "Policy created successfully with Policy Number: " + policyNumber);
+
+            test.appendChild(subTest);
+            addTestToMainReport(test);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            subTest.log(LogStatus.FAIL, "Exception Occurred - " + e.getLocalizedMessage());
+            test.appendChild(subTest);
+            addTestToMainReport(test);
+            Assert.fail();
+        }
+    }
+
+    private boolean coverageExists(String coverageId) {
+        NodeList coverageList = doc.getElementsByTagName("Coverage");
+        return IntStream.range(0, coverageList.getLength())
+                .mapToObj(coverageList::item)
+                .anyMatch(node -> node instanceof Element && coverageId.equals(((Element) node).getAttribute("id")));
+    }
+
+    private void addCoverageSection(String coverageType, List<Object[]> updates) throws Exception {
+        String coverageTemplate = 
+            "<Coverage id=\"" + coverageType + "\">" +
+                "<ProductCode>" + coverageType + "</ProductCode>" +
+                "<LifeCovTypeCode>" + coverageType + "_Coverage</LifeCovTypeCode>" +
+                "<BenefitCoverage>Additional Coverage</BenefitCoverage>" +
+                "<LifeParticipant PartyID=\"\">" +
+                    "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+                    "<TobaccoPremiumBasis tc=\"1\">Non-Smoker</TobaccoPremiumBasis>" +
+                    "<UnderwritingClass tc=\"111\">NS7_07</UnderwritingClass>" +
+                    "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+                    "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+                    "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+                    "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+                    "<ExtraRatingFactor>0</ExtraRatingFactor>" +
+                "</LifeParticipant>" +
+                "<RiderInsured>Primary Insured</RiderInsured>" +
+                "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+                "<LevelPremiumPeriod/>" +
+                "<EffDate>2023-01-01</EffDate>" +
+                "<ExpiryDate>2106-12-28</ExpiryDate>" +
+            "</Coverage>";
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document coverageDoc = builder.parse(new ByteArrayInputStream(coverageTemplate.getBytes(StandardCharsets.UTF_8)));
+
+        Node coverageNode = doc.importNode(coverageDoc.getDocumentElement(), true);
+        NodeList lifeNodes = doc.getElementsByTagName("Life");
+        if (lifeNodes.getLength() > 0) {
+            lifeNodes.item(0).appendChild(coverageNode);
+        }
+    }
+
+    // Other helper methods (saveXML, loadTemplate, encodeXMLToBase64, getBearerToken, createPolicy) remain the same
+}
