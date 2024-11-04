@@ -1,0 +1,25 @@
+private void saveXML(String fileName, ExtentTest subTest) throws TransformerException {
+    File outputDir = new File("output");
+    if (!outputDir.exists()) outputDir.mkdir();
+
+    File savedFile = new File(outputDir, fileName);
+
+    // Configure transformer to avoid any schema or formatting changes
+    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    Transformer transformer = transformerFactory.newTransformer();
+
+    // Keep settings to minimize structural modifications
+    transformer.setOutputProperty(OutputKeys.INDENT, "no"); // Disable indentation
+    transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no"); // Keep XML declaration
+    transformer.setOutputProperty(OutputKeys.STANDALONE, "no"); // Ensure standalone attribute matches
+
+    // Explicitly specify the encoding if the original XML uses UTF-8
+    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+
+    // Perform the transformation to the saved XML file
+    DOMSource source = new DOMSource(doc);
+    StreamResult result = new StreamResult(savedFile);
+    transformer.transform(source, result);
+
+    subTest.log(LogStatus.INFO, "Saved XML file with minimal transformation to maintain schema integrity.");
+}
