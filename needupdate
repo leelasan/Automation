@@ -31,6 +31,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -71,7 +73,12 @@ public class XMLUpdateTest extends WebBase {
 
     @BeforeClass
     public void setup() throws Exception {
-        // Initialize ExtentReports and other setup code here...
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
+        LocalDateTime now = LocalDateTime.now();
+        folderPath = ".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now);
+        String fileName = folderPath + "/CreatePolicyWithAPI.html";
+        mainReport = new ExtentReports(fileName);
+        mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
     }
 
     @Test(dataProvider = "xmlUpdateData", dataProviderClass = fast.dataProviders.ReadDataFromXLSX.class)
@@ -145,12 +152,10 @@ public class XMLUpdateTest extends WebBase {
     }
 
     private Element createCoverageNode(String coverageId) throws Exception {
-        // Create a new Document to hold the WOP coverage template
         DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         String template = coverageId.equals("WOP") ? WOP_COVERAGE_TEMPLATE : ""; // Add other templates if needed
         Document coverageDoc = builder.parse(new ByteArrayInputStream(template.getBytes(StandardCharsets.UTF_8)));
         
-        // Import the coverage node from the template into the main document
         Element coverageElement = (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
         coverageElement.setAttribute("id", coverageId);
         return coverageElement;
@@ -177,25 +182,25 @@ public class XMLUpdateTest extends WebBase {
         }
     }
 
-   private boolean matchesCondition(Element element, String condition) {
-    if (condition.isEmpty()) {
-        return true;
-    }
-
-    String conditionAttribute = "id";
-    String conditionValue = condition;
-
-    Node currentNode = element;
-    while (currentNode != null && currentNode.getNodeType() == Node.ELEMENT_NODE) {
-        Element currentElement = (Element) currentNode;
-        if (currentElement.hasAttribute(conditionAttribute)
-                && currentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
+    private boolean matchesCondition(Element element, String condition) {
+        if (condition.isEmpty()) {
             return true;
         }
-        currentNode = currentNode.getParentNode();
+
+        String conditionAttribute = "id";
+        String conditionValue = condition;
+
+        Node currentNode = element;
+        while (currentNode != null && currentNode.getNodeType() == Node.ELEMENT_NODE) {
+            Element currentElement = (Element) currentNode;
+            if (currentElement.hasAttribute(conditionAttribute)
+                    && currentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
+                return true;
+            }
+            currentNode = currentNode.getParentNode();
+        }
+        return false;
     }
-    return false;
-}
 
     private String saveXML(String fileName, ExtentTest subTest) throws TransformerException {
         File outputDir = new File("output");
@@ -226,7 +231,7 @@ public class XMLUpdateTest extends WebBase {
     private String createPolicy(String token, String encodedXML, ExtentTest subTest) throws Exception {
         String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
         CloseableHttpClient client = HttpClients.createDefault();
-        HttpPost post =         new HttpPost(EnvParameters.policyApiUrl);
+        HttpPost post = new HttpPost(EnvParameters.policyApiUrl);
         post.setHeader("Authorization", "Bearer " + token);
         post.setHeader("Content-Type", "application/json");
         post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
@@ -242,6 +247,69 @@ public class XMLUpdateTest extends WebBase {
         JSONObject jsonResponse = new JSONObject(responseBody);
         return jsonResponse.getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
     }
-}
 
+    private String getBearerToken(ExtentTest tokenSubTest) throws Exception {
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("config.properties"));
+        String userID = prop.getProperty("User_Name");
+        String password = prop.getProperty("Password");
+
+        String payload = "{ \"username\" : \"" + userID + "\", \"password\" : \"" + password + "\" }";
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(EnvParameters.tokenApiUrl);
+            post.setHeader("Content-Type", "application/json");
+            post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
+            post.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
+
+            try (CloseableHttpResponse response = client.execute(post)) {
+                String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+                return extractTokenFromResponse(responseBody);
+            }
+        }
+    }
+
+    private String extractTokenFromResponse(String responseBody) {
+        return responseBody.split("\"token\"\\s*:\\s*\"")[1].split("\"")[0];
+    }
+
+    public void logError(ExtentTest localTest, Exception e, WebDriver driver) {
+        String screenshotFileName = "/Screenshots/Screenshot_" + Math.random() + ".png";
+        String screenshotPath = System.getProperty("user.dir") + folderPath.substring(2) + screenshotFileName;
+        screenshotFileName = "./" + screenshotFileName;
+        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        try {
+            FileUtils.copyFile(scrFile, new File(screenshotPath));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        localTest.log(LogStatus.ERROR, "Exception Occurred and Execution Stopped.\n" + e.getLocalizedMessage()
+                + localTest.addScreenCapture(screenshotFileName));
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void reporee(ITestContext result) {
+        try {
+            FileUtils.deleteDirectory(new File(folderPath + "/Additional Supporting Reports"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mainReport.flush();
+    }
+
+    public void addTestToMainReport(ExtentTest test) {
+        ITest grandParentTest = test.getTest();
+        ExtentTest parentTest = mainReport.startTest(grandParentTest.getName());
+        List<com.relevantcodes.extentreports.model.Test> children = grandParentTest.getNodeList();
+        for (int k = 0; k < children.size(); k++) {
+            ExtentTest child = mainReport.startTest(children.get(k).getName());
+            List<Log> logs = children.get(k).getLogList();
+            for (int i = 0; i < logs.size(); i++) {
+                child.log(logs.get(i).getLogStatus(), logs.get(i).getDetails());
+            }
+            parentTest.appendChild(child);
+            mainReport.endTest(child);
+        }
+        mainReport.endTest(parentTest);
+    }
+}
 
