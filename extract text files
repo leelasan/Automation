@@ -1,0 +1,37 @@
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.stream.Stream;
+
+public class CopyTxtFiles {
+    public static void main(String[] args) {
+        // Replace with the folder path you want to search
+        String sourceFolderPath = "C:/your/source/folder/path";
+        // Replace with the folder path where files should be copied
+        String outputFolderPath = "C:/your/output/folder/path";
+
+        try (Stream<Path> filePathStream = Files.walk(Paths.get(sourceFolderPath))) {
+            filePathStream
+                .filter(Files::isRegularFile) // Filter regular files
+                .filter(path -> path.toString().endsWith(".txt")) // Filter .txt files
+                .forEach(sourceFile -> {
+                    try {
+                        // Create the target folder structure
+                        Path targetFile = Paths.get(outputFolderPath, sourceFile.toString()
+                                .substring(sourceFolderPath.length()));
+                        
+                        // Ensure the parent directories exist
+                        Files.createDirectories(targetFile.getParent());
+                        
+                        // Copy the file to the output directory
+                        Files.copy(sourceFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+
+                        System.out.println("Copied: " + sourceFile + " to " + targetFile);
+                    } catch (IOException e) {
+                        System.err.println("Failed to copy file: " + sourceFile + ". Error: " + e.getMessage());
+                    }
+                });
+        } catch (IOException e) {
+            System.err.println("An error occurred while processing files: " + e.getMessage());
+        }
+    }
+}
