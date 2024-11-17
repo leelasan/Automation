@@ -1,0 +1,453 @@
+package test.fast.CreatePolicyforLife;
+
+import com.nyl.base.WebBase;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ContentType;
+import org.json.JSONObject;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.Test;
+import org.testng.annotations.DataProvider;
+import org.w3c.dom.*;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+import java.util.stream.IntStream;
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+import com.relevantcodes.extentreports.model.ITest;
+import com.relevantcodes.extentreports.model.Log;
+
+public class UpdateXMLAndCreatePolicy extends WebBase {
+
+    private Document doc;
+    public static ExtentReports mainReport;
+    public HashMap<String, Integer> testCaseRetryCount = new HashMap<>();
+    public String folderPath;
+    public String templateDir;
+    private String token;
+    public ExtentTest subTest = null;
+    public ExtentTest test = null;
+    public ExtentTest tokenSubTest = null;
+
+    // Define a single generic template for Coverage
+    private static final String COVERAGE_TEMPLATE = 
+        "<Coverage id=\"\">" +  // id will be set dynamically
+        "<ProductCode></ProductCode>" +  // ProductCode will be set dynamically
+        "<LifeCovTypeCode>WP</LifeCovTypeCode>" +
+        "<BenefitCoverage>Base Coverage</BenefitCoverage>" +
+        "<LifeParticipant PartyID=\"\">" +
+        "<LifeParticipantRoleCode tc=\"1\">Primary Insured</LifeParticipantRoleCode>" +
+        "<TobaccoPremiumBasis tc=\"1\">Smoker</TobaccoPremiumBasis>" +
+        "<UnderwritingClass tc=\"101\">NS1_01</UnderwritingClass>" +
+        "<PermTableRating tc=\"STD\">STD</PermTableRating>" +
+        "<TempFlatExtraAmt>0</TempFlatExtraAmt>" +
+        "<TempFlatExtraDuration>0</TempFlatExtraDuration>" +
+        "<PermFlatExtraAmt>0</PermFlatExtraAmt>" +
+        "<ExtraRatingFactor>1</ExtraRatingFactor>" +
+        "</LifeParticipant>" +
+        "<RiderInsured>Primary Insured</RiderInsured>" +
+        "<OptionNumberOfUnits>0</OptionNumberOfUnits>" +
+        "<LevelPremiumPeriod/>" +
+        "<EffDate>2022-04-22</EffDate>" +
+        "<ExpiryDate>2035-04-22</ExpiryDate>" +
+        "</Coverage>";
+
+    @BeforeClass
+    public void setup() throws Exception {
+    	// Initialize ExtentReports 
+    			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss"); 
+    			LocalDateTime now = LocalDateTime.now(); 
+    			folderPath =".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now); 
+    			fileName = folderPath + "/CreatePolicyWithAPI.html";
+    			mainReport = new ExtentReports(fileName); 
+    			mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
+    			
+    			ExtentReports report = new ExtentReports("dummy.html");
+    			test = report.startTest("Generate Token"); 
+    			tokenSubTest = report.startTest("Token Generation Steps"); 
+    			tokenSubTest.log(LogStatus.INFO,"Generating bearer token");
+    			
+    			try {
+    				this.token = getBearerToken(tokenSubTest);
+    				tokenSubTest.log(LogStatus.PASS, "Bearer token generated successfully");
+    				tokenSubTest.log(LogStatus.INFO,"<font color='#30A0DB'><b>token: </b></font>"+this.token);
+
+    			} catch (Exception e) {
+    				 tokenSubTest.log(LogStatus.FAIL, "Bearer token generation failed: "+ e.getMessage());
+    				throw e;
+    			}
+
+    			test.appendChild(tokenSubTest);
+    			addTestToMainReport(test);
+    			
+    }
+
+    @Test(dataProvider = "xmlUpdateData", dataProviderClass = fast.dataProviders.ReadDataFromXLSX.class)
+    public void updateXML(String testCaseName, String templateName, List<Object[]> updates, ITestContext context) throws Exception {
+    	
+    	if (testCaseRetryCount.get(testCaseName) == null)
+			testCaseRetryCount.put(testCaseName, Integer.valueOf("1"));
+		else {
+			int count = testCaseRetryCount.get(testCaseName);
+			testCaseRetryCount.put(testCaseName, ++count);
+		}
+    	
+        ExtentReports report = new ExtentReports("dummy.html");
+        test = report.startTest("Policy Creation Test for " + testCaseName);
+
+        String polNumber = (String) updates.get(0)[2];
+        subTest = report.startTest("Policy Creation Test for " + testCaseName + " with the policy number " + polNumber);
+
+        // Load the XML template
+        templateDir = context.getCurrentXmlTest().getParameter("templateDir");
+        loadTemplate(templateName, subTest);
+
+        // 1. Add Coverage Sections Based on Test Data Flags
+        addCoverageSections(updates);
+
+        // Save XML after adding coverage sections
+        String intermediateFilePath = saveXML(polNumber + "_intermediate.xml", subTest);
+
+        // Reload the XML for further updates
+        loadTemplateFromFile(intermediateFilePath);
+
+        // 2. Update Nodes and Attributes from Test Data
+        applyNodeUpdates(updates);
+
+        // Final save and submit
+        String updatedFilePath = saveXML(polNumber + "_updated.xml", subTest);
+        String encodedXML = encodeXMLToBase64(updatedFilePath);
+        subTest.log(LogStatus.PASS, "Encoded XML to Base64");
+
+        // Submit XML
+        String policyNumber = createPolicy(token, encodedXML, subTest);
+        subTest.log(LogStatus.PASS, "Policy created successfully with Policy Number: " + policyNumber);
+
+        test.appendChild(subTest);
+        addTestToMainReport(test);
+    }
+
+    private void addCoverageSections(List<Object[]> updates) throws Exception {
+        for (Object[] update : updates) {
+            String nodeNameCondition = (String) update[0];
+            String addCoverageFlag = (String) update[2];
+
+            // Check if this update is for a coverage (e.g., Coverage=ADB)
+            if (nodeNameCondition.startsWith("Coverage=") && "Yes".equalsIgnoreCase(addCoverageFlag)) {
+                // Extract the specific coverage type (e.g., "ADB")
+                String coverageId = nodeNameCondition.split("=")[1];
+                if (!coverageExists(coverageId)) {
+                    // Create the coverage element with the specific id and product code
+                    Element newCoverage = createCoverageNode(coverageId);
+                    Node lifeNode = doc.getElementsByTagName("Life").item(0);
+                    lifeNode.appendChild(newCoverage);
+                }
+            }
+        }
+    }
+    
+    
+    private boolean coverageExists(String coverageId) {
+        NodeList coverages = doc.getElementsByTagName("Coverage");
+        for (int i = 0; i < coverages.getLength(); i++) {
+            Element coverage = (Element) coverages.item(i);
+            if (coverage.getAttribute("id").equals(coverageId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Element createCoverageNode(String coverageId) throws Exception {
+        // Load the generic coverage template
+        DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        Document coverageDoc = builder.parse(new ByteArrayInputStream(COVERAGE_TEMPLATE.getBytes(StandardCharsets.UTF_8)));
+        
+        // Get the coverage element from the template and set specific attributes
+        Element coverageElement = (Element) doc.importNode(coverageDoc.getDocumentElement(), true);
+        coverageElement.setAttribute("id", coverageId);  // Set Coverage id
+        coverageElement.getElementsByTagName("ProductCode").item(0).setTextContent(coverageId);  // Set ProductCode
+
+        return coverageElement;
+    }
+
+
+    private void applyNodeUpdates(List<Object[]> updates) {
+        for (Object[] update : updates) {
+            String nodeName = (String) update[0];
+            String attributeValue = (String) update[1];
+            String nodeValue = (String) update[2];
+            String condition = (String) update[3];
+
+            NodeList nodeList = doc.getElementsByTagName(nodeName);
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Element element = (Element) nodeList.item(i);
+                
+                // Apply the condition to find the correct node
+                if (matchesCondition(element, condition)) {
+                    if (attributeValue != null && !attributeValue.isEmpty()) {
+                        element.setAttribute("tc", attributeValue);
+                        subTest.log(LogStatus.PASS, "Updated attribute TypeCode of [<font color='#30A0DB'><b>" + nodeName + "</b></font>] with value: [<font color='#30A0DB'><b>" + attributeValue + "</b></font>]");
+                    }
+                    
+                    if (nodeValue != null && !nodeValue.isEmpty()) {
+                        if (nodeName.equals("LifeParticipant")) {
+                            setLifeParticipantData(element, nodeValue);
+                        } else {
+                            element.setTextContent(nodeValue);
+                            subTest.log(LogStatus.PASS, "Updated [<font color='#30A0DB'><b>" + nodeName + "</b></font>] with value: [<font color='#30A0DB'><b>" + nodeValue + "</b></font>]");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private void setLifeParticipantData(Element lifeParticipant, String nodeValue) {
+        // Handle setting specific values inside LifeParticipant without creating duplicates
+        String[] dataFields = nodeValue.split(";"); // Assuming values are separated by semicolons in the input
+        for (String field : dataFields) {
+            String[] keyValue = field.split("=");
+            if (keyValue.length == 2) {
+                String childNodeName = keyValue[0].trim();
+                String childNodeValue = keyValue[1].trim();
+                updateOrCreateChildNode(lifeParticipant, childNodeName, childNodeValue);
+            }
+        }
+    }
+
+
+    private void updateOrCreateChildNode(Element parent, String childNodeName, String value) {
+        NodeList childNodes = parent.getElementsByTagName(childNodeName);
+        Element childElement;
+
+        if (childNodes.getLength() > 0) {
+            // Use existing child node, avoiding duplicates
+            childElement = (Element) childNodes.item(0);
+        } else {
+            // Create the child node if it does not exist
+            childElement = doc.createElement(childNodeName);
+            parent.appendChild(childElement);
+        }
+
+        childElement.setTextContent(value);  // Set or update the text content
+    }
+
+    private boolean matchesCondition(Element element, String condition) {
+        if (condition.isEmpty()) {
+            return true;
+        }
+
+        String conditionAttribute = "id";
+        String conditionValue = condition;
+
+        Node currentNode = element;
+        while (currentNode != null && currentNode.getNodeType() == Node.ELEMENT_NODE) {
+            Element currentElement = (Element) currentNode;
+            if (currentElement.hasAttribute(conditionAttribute)
+                    && currentElement.getAttribute(conditionAttribute).equals(conditionValue)) {
+                return true;
+            }
+            currentNode = currentNode.getParentNode();
+        }
+        return false;
+    }
+
+    private String saveXML(String fileName, ExtentTest subTest) throws TransformerException {
+        File outputDir = new File("output");
+        if (!outputDir.exists()) outputDir.mkdir();
+
+        File savedFile = new File(outputDir, fileName);
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
+
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(savedFile);
+        transformer.transform(source, result);
+
+        return savedFile.getPath();
+    }
+
+    private String encodeXMLToBase64(String filePath) throws Exception {
+        File file = new File(filePath);
+        FileInputStream fis = new FileInputStream(file);
+        byte[] bytes = new byte[(int) file.length()];
+        fis.read(bytes);
+        fis.close();
+        return Base64.encodeBase64String(bytes);
+    }
+
+    private String createPolicy(String token, String encodedXML, ExtentTest subTest) throws Exception {
+		// Prepare the payload
+		String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
+		subTest.log(LogStatus.PASS, "Created payload using Encoded XML");
+		
+		// Create the HTTP POST request
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpPost post = new HttpPost(EnvParameters.policyApiUrl);
+
+		// Set headers
+		post.setHeader("Content-Type", "application/json");
+		post.setHeader("Authorization", "Bearer " + token);
+		post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
+
+		// Set payload
+		post.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
+		
+		subTest.log(LogStatus.INFO, "Hitting the Policy Creation endpoint URL");
+		subTest.log(LogStatus.PASS, "with the policy api URL: [<font color='#30A0DB'><b>"+EnvParameters.policyApiUrl+"</b></font>]");
+		subTest.log(LogStatus.PASS, "and with the API Key: [<font color='#30A0DB'><b>"+EnvParameters.XAPIKEY+"</b></font>]");
+		
+		// Execute the request
+		CloseableHttpResponse response = client.execute(post);
+
+		// Extract response body
+		String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+		client.close();
+
+		subTest.log(LogStatus.PASS, "<font color='#30A0DB'><b>Response Body:</b></font> "+responseBody);
+		// Extract and return the Policy Number from the response
+		return extractPolicyNumberFromResponse(responseBody);
+	}
+
+    private String extractPolicyNumberFromResponse(String responseBody) {
+        JSONObject jsonResponse = new JSONObject(responseBody);
+        return jsonResponse.getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
+    }
+
+    private String getBearerToken(ExtentTest tokenSubTest) throws Exception {
+		FileInputStream fis = null;
+		Properties prop = null;
+
+		fis = new FileInputStream("config.properties");
+		prop = new Properties();
+		prop.load(fis);
+		String userID = prop.getProperty("User_Name");
+		String password = prop.getProperty("Password");
+		
+		// Prepare the payload
+		String payload = "{ \"username\" : \"" + userID + "\", \"password\" : \"" + password + "\" }";
+		tokenSubTest.log(LogStatus.INFO,"Created the payload with User ID: [<font color='#30A0DB'><b>"+userID+"</b></font>] and Password: [<font color='#30A0DB'><b>"+password+"</b></font>]");
+		
+		// Create the HTTP POST request
+		CloseableHttpClient client = HttpClients.createDefault();
+		HttpPost post = new HttpPost(EnvParameters.tokenApiUrl);
+		
+		// Set headers
+		post.setHeader("Content-Type", "application/json");
+		post.setHeader("X-API-KEY", EnvParameters.XAPIKEY);
+
+		// Set payload
+		post.setEntity(new StringEntity(payload, ContentType.APPLICATION_JSON));
+
+		tokenSubTest.log(LogStatus.INFO,"Hitting the token API endpoint URL");
+		tokenSubTest.log(LogStatus.PASS, "with the token api URL: [<font color='#30A0DB'><b>"+EnvParameters.tokenApiUrl+"</b></font>]");
+		tokenSubTest.log(LogStatus.PASS, "and with the API Key: [<font color='#30A0DB'><b>"+EnvParameters.XAPIKEY+"</b></font>]");
+		
+		// Execute the request
+		CloseableHttpResponse response = client.execute(post);
+
+		// Extract response body
+		String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+		client.close();
+
+		// Extract and return the token from the response
+		return extractTokenFromResponse(responseBody);
+
+	}
+
+    private String extractTokenFromResponse(String responseBody) {
+        return responseBody.split("\"token\"\\s*:\\s*\"")[1].split("\"")[0];
+    }
+
+    public void logError(ExtentTest localTest, Exception e, WebDriver driver) {
+        String screenshotFileName = "/Screenshots/Screenshot_" + Math.random() + ".png";
+        String screenshotPath = System.getProperty("user.dir") + folderPath.substring(2) + screenshotFileName;
+        screenshotFileName = "./" + screenshotFileName;
+        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        try {
+            FileUtils.copyFile(scrFile, new File(screenshotPath));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        localTest.log(LogStatus.ERROR, "Exception Occurred and Execution Stopped.\n" + e.getLocalizedMessage()
+                + localTest.addScreenCapture(screenshotFileName));
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void reporee(ITestContext result) {
+        try {
+            FileUtils.deleteDirectory(new File(folderPath + "/Additional Supporting Reports"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mainReport.flush();
+    }
+
+    public void addTestToMainReport(ExtentTest test) {
+        ITest grandParentTest = test.getTest();
+        ExtentTest parentTest = mainReport.startTest(grandParentTest.getName());
+        List<com.relevantcodes.extentreports.model.Test> children = grandParentTest.getNodeList();
+        for (int k = 0; k < children.size(); k++) {
+            ExtentTest child = mainReport.startTest(children.get(k).getName());
+            List<Log> logs = children.get(k).getLogList();
+            for (int i = 0; i < logs.size(); i++) {
+                child.log(logs.get(i).getLogStatus(), logs.get(i).getDetails());
+            }
+            parentTest.appendChild(child);
+            mainReport.endTest(child);
+        }
+        mainReport.endTest(parentTest);
+    }
+
+private void loadTemplate(String templateName, ExtentTest subTest) throws Exception {
+    subTest.log(LogStatus.INFO, "Loading XML template: [<font color='#30A0DB'><b>" + templateName + "</b></font>]");
+    File templateFile = new File(templateDir, templateName);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    doc = builder.parse(templateFile);
+    subTest.log(LogStatus.PASS, "Template loaded successfully");
+}
+
+private void loadTemplateFromFile(String filePath) throws Exception {
+    File templateFile = new File(filePath);
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    factory.setNamespaceAware(true);
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    doc = builder.parse(templateFile);
+}
+
+}
