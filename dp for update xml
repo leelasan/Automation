@@ -1,0 +1,76 @@
+// Data provider for updating the XML file for Policy Creation transaction
+    @DataProvider(name = "xmlUpdateData", parallel = true)
+    public static Iterator<Object[]> xmlUpdateData(ITestContext context) throws IOException {
+    	
+    	String filePath = context.getCurrentXmlTest().getParameter("xlsxFilePath");
+    	String temlateName = context.getCurrentXmlTest().getParameter("temlateName");
+    	
+        List<Object[]> data = new ArrayList<>();
+        FileInputStream file = new FileInputStream(filePath);
+        Workbook workbook = new XSSFWorkbook(file);
+
+        // Load PolicyData_New sheet
+        Sheet policyDataSheet = workbook.getSheet("PolicyData");
+        Row headerRow = policyDataSheet.getRow(0);
+
+        // Load TC_Mapping sheet into a lookup map
+        Map<String, String> tcMapping = loadTCMapping(workbook.getSheet("TC_Mapping"));
+
+        for (int rowIndex = 1; rowIndex <= policyDataSheet.getLastRowNum(); rowIndex++) {
+            Row row = policyDataSheet.getRow(rowIndex);
+            if (row == null) continue;
+
+            String testCaseName = row.getCell(0).getStringCellValue();  // Assume test case name is in the first column
+            String execution = row.getCell(1).getStringCellValue();     // Execution indicator in the second column
+
+            if ("Yes".equalsIgnoreCase(execution)) {
+                List<Object[]> updates = new ArrayList<>();
+                
+                for (int colIndex = 2; colIndex < headerRow.getLastCellNum(); colIndex++) {
+                    Cell headerCell = headerRow.getCell(colIndex);
+                    Cell dataCell = row.getCell(colIndex);
+                    
+                    if (headerCell != null && dataCell != null) {
+                        String headerName = headerCell.getStringCellValue();
+                        String nodeValue = dataCell.getStringCellValue();
+
+                        // Split header name by '#' to get Node_Name and Condition if present
+                        String[] parts = headerName.split("#");
+                        String nodeName = parts[0];
+                        String condition = parts.length > 1 ? parts[1] : "";
+
+                        // Lookup in TC_Mapping if nodeValue is a Field_Value and get the TypeCode for the attribute
+                        String attributeValue = tcMapping.getOrDefault(nodeName + "#" + nodeValue, null);
+
+                        updates.add(new Object[]{nodeName, attributeValue, nodeValue, condition});
+                    }
+                }
+                
+                data.add(new Object[]{testCaseName, temlateName, updates});
+            }
+        }
+
+        workbook.close();
+        file.close();
+
+        return data.iterator();
+    }
+    
+    // Helper method for xmlUpdateData data provider
+    private static Map<String, String> loadTCMapping(Sheet mappingSheet) {
+        Map<String, String> mapping = new HashMap<>();
+        
+        for (int rowIndex = 1; rowIndex <= mappingSheet.getLastRowNum(); rowIndex++) {
+            Row row = mappingSheet.getRow(rowIndex);
+            if (row == null) continue;
+
+            String fieldName = row.getCell(0).getStringCellValue();
+            String fieldValue = row.getCell(1).getStringCellValue();
+            String typeCode = row.getCell(2).getStringCellValue();
+
+            // Combine Field_Name and Field_Value as the key, mapping to TypeCode
+            mapping.put(fieldName + "#" + fieldValue, typeCode);
+        }
+
+        return mapping;
+    }
