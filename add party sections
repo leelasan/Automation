@@ -1,0 +1,79 @@
+private void addPartySections(List<Object[]> updates) throws Exception {
+    for (Object[] update : updates) {
+        String nodeNameCondition = (String) update[0];
+        String addPartyFlag = (String) update[2];
+
+        if (nodeNameCondition.startsWith("Party=") && "Yes".equalsIgnoreCase(addPartyFlag)) {
+            String partyId = nodeNameCondition.split("=")[1];
+
+            if (partyId.startsWith("Party_Agent_")) {
+                addPartyAgentNode(partyId);
+            } else if (partyId.startsWith("Party_Beneficiary_")) {
+                addPartyBeneficiaryNode(partyId);
+            }
+        }
+    }
+}
+
+private void addPartyAgentNode(String partyId) throws Exception {
+    String partyAgentTemplate = 
+        "<Party id=\"" + partyId + "\">" +
+        "<PartyTypeCode tc=\"1\">Person</PartyTypeCode>" +
+        "<FullName>Default Agent Name</FullName>" +
+        "<Person/>" +
+        "<Producer>" +
+        "<CarrierAppointment>" +
+        "<CompanyProducerID>DefaultID</CompanyProducerID>" +
+        "<CarrierApptTypeCode tc=\"1\">Agent</CarrierApptTypeCode>" +
+        "</CarrierAppointment>" +
+        "</Producer>" +
+        "</Party>" +
+        "<Relation OriginatingObjectID=\"Application_Holding\" RelatedObjectID=\"" + partyId + "\" id=\"Relation_Application_" + partyId + "\">" +
+        "<OriginatingObjectType tc=\"4\">Holding</OriginatingObjectType>" +
+        "<RelatedObjectType tc=\"6\">Party</RelatedObjectType>" +
+        "<RelationRoleCode tc=\"37\">Primary Writing Agent</RelationRoleCode>" +
+        "<InterestPercent>50</InterestPercent>" +
+        "</Relation>";
+
+    addPartyNode(partyAgentTemplate);
+}
+
+private void addPartyBeneficiaryNode(String partyId) throws Exception {
+    String partyBeneficiaryTemplate = 
+        "<Party id=\"" + partyId + "\">" +
+        "<PartyTypeCode tc=\"1\">Person</PartyTypeCode>" +
+        "<FullName>Default Beneficiary Name</FullName>" +
+        "<GovtID>000000000</GovtID>" +
+        "<GovtIDTC tc=\"1\">SSN</GovtIDTC>" +
+        "<Person>" +
+        "<FirstName>FirstName</FirstName>" +
+        "<MiddleName>MiddleName</MiddleName>" +
+        "<LastName>LastName</LastName>" +
+        "<Gender tc=\"2\">F</Gender>" +
+        "<BirthDate>2000-01-01</BirthDate>" +
+        "</Person>" +
+        "<Address>" +
+        "<AddressTypeCode tc=\"1\">Residence</AddressTypeCode>" +
+        "<Line1>Default Address</Line1>" +
+        "<City>City</City>" +
+        "<AddressStateTC tc=\"28\">MN</AddressStateTC>" +
+        "<Zip>00000</Zip>" +
+        "<AddressCountryTC tc=\"1\">USA</AddressCountryTC>" +
+        "</Address>" +
+        "</Party>" +
+        "<Relation OriginatingObjectID=\"Application_Holding\" RelatedObjectID=\"" + partyId + "\" id=\"Relation_" + partyId + "\">" +
+        "<RelationRoleCode tc=\"34\">Beneficiary</RelationRoleCode>" +
+        "<InterestPercent>100</InterestPercent>" +
+        "</Relation>";
+
+    addPartyNode(partyBeneficiaryTemplate);
+}
+
+private void addPartyNode(String partyTemplate) throws Exception {
+    DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+    Document partyDoc = builder.parse(new ByteArrayInputStream(partyTemplate.getBytes(StandardCharsets.UTF_8)));
+
+    Node importedNode = doc.importNode(partyDoc.getDocumentElement(), true);
+    Node olifeNode = doc.getElementsByTagName("OLifE").item(0);
+    olifeNode.appendChild(importedNode);
+}
