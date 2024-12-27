@@ -44,7 +44,7 @@ public class TRADToTDSheet extends WebBase{
 	                
 	                int testCaseCounter = destRowCount + 1; // Start TC_Number increment from the last record
 	                
-	             // Map to track destination rows by policy number
+	                // Map to track destination rows by policy number
 	                Map<String, Row> policyRowMap = new HashMap<>();
 
 	                for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
@@ -57,6 +57,77 @@ public class TRADToTDSheet extends WebBase{
 	                    if (headerRow == null) continue;
 
 	                    Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+	                   
+	                    for (Row row : sourceSheet) {
+	                        if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+	                        // Get the policy number
+	                        int policyColIndex = columnIndices.getOrDefault("policynumber", -1);
+	                        if (policyColIndex == -1) {
+	                            System.out.println("PolicyNumber column not found in column indices");
+	                            continue;
+	                        }
+
+	                        Cell policyCell = row.getCell(policyColIndex);
+	                        if (policyCell == null || policyCell.getCellType() == CellType.BLANK) {
+	                            System.out.println("Policy Number Cell is null or blank for row: " + row.getRowNum());
+	                            continue;
+	                        }
+
+	                        String policyNumber = null;
+	                        switch (policyCell.getCellType()) {
+	                            case STRING:
+	                                policyNumber = policyCell.getStringCellValue().trim();
+	                                break;
+	                            case NUMERIC:
+	                                policyNumber = String.valueOf((long) policyCell.getNumericCellValue());
+	                                break;
+	                            default:
+	                                System.out.println("Unsupported Policy Number Cell Type at row: " + row.getRowNum());
+	                                continue;
+	                        }
+
+	                        System.out.println("Processing Policy: " + policyNumber);
+
+	                        // Get or create the destination row
+	                        Row destRow = policyRowMap.get(policyNumber);
+	                        if (destRow == null) {
+	                            destRow = destinationSheet.createRow(destRowCount++);
+	                            policyRowMap.put(policyNumber, destRow);
+	                        }
+
+	                        // Copy data for mapped columns
+	                        for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
+	                            int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
+	                            int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
+	                            if (sourceColIndex == -1 || destColIndex == -1) {
+	                                System.out.println("Skipping unmapped column: Source=" + colEntry.getKey() + ", Dest=" + colEntry.getValue());
+	                                continue;
+	                            }
+	                            copyCell(row, destRow, sourceColIndex, destColIndex);
+	                        }
+
+	                        // Add static fields only after data has been copied
+	                        if (columnExists(destinationSheet, "TC_Number") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Number")) == null) {
+	                            destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Number"))
+	                                    .setCellValue(String.format("TC%03d", testCaseCounter++));
+	                        }
+	                        if (columnExists(destinationSheet, "TC_Name") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Name")) == null) {
+	                            destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Name"))
+	                                    .setCellValue("UI Fields Validation");
+	                        }
+	                        if (columnExists(destinationSheet, "Test_Category") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Test_Category")) == null) {
+	                            destRow.createCell(getExistingColumnIndex(destinationSheet, "Test_Category"))
+	                                    .setCellValue("Sanity Test");
+	                        }
+	                        if (columnExists(destinationSheet, "Execution") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Execution")) == null) {
+	                            destRow.createCell(getExistingColumnIndex(destinationSheet, "Execution"))
+	                                    .setCellValue("Yes");
+	                        }
+	                    }
+
+	                    
+	                    /*
 	                    for (Row row : sourceSheet) {
 	                    	
 	                    	System.out.println(row.getRowNum());
@@ -135,6 +206,7 @@ public class TRADToTDSheet extends WebBase{
 	                                    .setCellValue("Yes");
 	                        }
 	                    }
+	                    */
 	                }
 
 	                
@@ -362,76 +434,4 @@ public class TRADToTDSheet extends WebBase{
 	    }
 	    */
 
-}
-
-
-
-
-
-for (Row row : sourceSheet) {
-    if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
-
-    // Get the policy number
-    int policyColIndex = columnIndices.getOrDefault("policynumber", -1);
-    if (policyColIndex == -1) {
-        System.out.println("PolicyNumber column not found in column indices");
-        continue;
-    }
-
-    Cell policyCell = row.getCell(policyColIndex);
-    if (policyCell == null || policyCell.getCellType() == CellType.BLANK) {
-        System.out.println("Policy Number Cell is null or blank for row: " + row.getRowNum());
-        continue;
-    }
-
-    String policyNumber = null;
-    switch (policyCell.getCellType()) {
-        case STRING:
-            policyNumber = policyCell.getStringCellValue().trim();
-            break;
-        case NUMERIC:
-            policyNumber = String.valueOf((long) policyCell.getNumericCellValue());
-            break;
-        default:
-            System.out.println("Unsupported Policy Number Cell Type at row: " + row.getRowNum());
-            continue;
-    }
-
-    System.out.println("Processing Policy: " + policyNumber);
-
-    // Get or create the destination row
-    Row destRow = policyRowMap.get(policyNumber);
-    if (destRow == null) {
-        destRow = destinationSheet.createRow(destRowCount++);
-        policyRowMap.put(policyNumber, destRow);
-    }
-
-    // Copy data for mapped columns
-    for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
-        int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
-        int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
-        if (sourceColIndex == -1 || destColIndex == -1) {
-            System.out.println("Skipping unmapped column: Source=" + colEntry.getKey() + ", Dest=" + colEntry.getValue());
-            continue;
-        }
-        copyCell(row, destRow, sourceColIndex, destColIndex);
-    }
-
-    // Add static fields only after data has been copied
-    if (columnExists(destinationSheet, "TC_Number") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Number")) == null) {
-        destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Number"))
-                .setCellValue(String.format("TC%03d", testCaseCounter++));
-    }
-    if (columnExists(destinationSheet, "TC_Name") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Name")) == null) {
-        destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Name"))
-                .setCellValue("UI Fields Validation");
-    }
-    if (columnExists(destinationSheet, "Test_Category") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Test_Category")) == null) {
-        destRow.createCell(getExistingColumnIndex(destinationSheet, "Test_Category"))
-                .setCellValue("Sanity Test");
-    }
-    if (columnExists(destinationSheet, "Execution") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Execution")) == null) {
-        destRow.createCell(getExistingColumnIndex(destinationSheet, "Execution"))
-                .setCellValue("Yes");
-    }
 }
