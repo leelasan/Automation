@@ -200,3 +200,120 @@ public class TRADToTDSheet extends WebBase{
 	    }
 
 }
+
+
+
+
+
+
+
+// Map to track destination rows by policy number
+Map<String, Row> policyRowMap = new HashMap<>();
+
+for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
+    String sourceSheetName = entry.getKey();
+    Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+    if (sourceSheet == null) continue;
+
+    Row headerRow = findHeaderRow(sourceSheet, entry.getValue().keySet());
+    if (headerRow == null) continue;
+
+    Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+    for (Row row : sourceSheet) {
+        if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+        // Get the policy number from the row
+        String policyNumber = row.getCell(columnIndices.get("PolicyNumber")).getStringCellValue().trim();
+
+        // Get or create the destination row for this policy
+        Row destRow = policyRowMap.get(policyNumber);
+        if (destRow == null) {
+            destRow = destinationSheet.createRow(destRowCount++);
+            policyRowMap.put(policyNumber, destRow);
+        }
+
+        // Copy data for mapped columns
+        for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
+            int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
+            int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
+            copyCell(row, destRow, sourceColIndex, destColIndex);
+        }
+
+        // Add static fields if not already set
+        if (columnExists(destinationSheet, "TC_Number") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Number")) == null) {
+            destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Number"))
+                    .setCellValue(String.format("TC%03d", testCaseCounter++));
+        }
+        if (columnExists(destinationSheet, "TC_Name") && destRow.getCell(getExistingColumnIndex(destinationSheet, "TC_Name")) == null) {
+            destRow.createCell(getExistingColumnIndex(destinationSheet, "TC_Name"))
+                    .setCellValue("UI Fields Validation");
+        }
+        if (columnExists(destinationSheet, "Test_Category") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Test_Category")) == null) {
+            destRow.createCell(getExistingColumnIndex(destinationSheet, "Test_Category"))
+                    .setCellValue("Sanity Test");
+        }
+        if (columnExists(destinationSheet, "Execution") && destRow.getCell(getExistingColumnIndex(destinationSheet, "Execution")) == null) {
+            destRow.createCell(getExistingColumnIndex(destinationSheet, "Execution"))
+                    .setCellValue("Yes");
+        }
+    }
+}
+
+private static void copyCell(Row sourceRow, Row destRow, Integer sourceColIndex, int destColIndex) {
+    if (sourceColIndex == null || sourceColIndex < 0 || destColIndex < 0) return;
+
+    Cell sourceCell = sourceRow.getCell(sourceColIndex);
+    if (sourceCell == null) return;
+
+    Cell destCell = destRow.createCell(destColIndex);
+
+    // Copy value and format
+    switch (sourceCell.getCellType()) {
+        case STRING:
+            destCell.setCellValue(sourceCell.getStringCellValue());
+            break;
+        case NUMERIC:
+            if (DateUtil.isCellDateFormatted(sourceCell)) {
+                destCell.setCellValue(sourceCell.getDateCellValue());
+            } else {
+                destCell.setCellValue(sourceCell.getNumericCellValue());
+            }
+            break;
+        case BOOLEAN:
+            destCell.setCellValue(sourceCell.getBooleanCellValue());
+            break;
+        case FORMULA:
+            destCell.setCellFormula(sourceCell.getCellFormula());
+            break;
+        default:
+            destCell.setCellValue("");
+            break;
+    }
+
+    // Copy style
+    if (sourceCell.getCellStyle() != null) {
+        destCell.setCellStyle(sourceCell.getCellStyle());
+    }
+}
+
+
+private static Map<String, Integer> getColumnIndices(Row headerRow, Iterable<String> columnNames) {
+    Map<String, Integer> indices = new HashMap<>();
+    Set<String> columnNameSet = new HashSet<>();
+    columnNames.forEach(name -> columnNameSet.add(name.toLowerCase())); // Convert to lowercase
+
+    for (Cell cell : headerRow) {
+        if (cell.getCellType() == CellType.STRING) {
+            String columnName = cell.getStringCellValue().trim().toLowerCase(); // Convert to lowercase
+            if (columnNameSet.contains(columnName)) {
+                indices.put(columnName, cell.getColumnIndex());
+            }
+        }
+    }
+    return indices;
+}
+
+
+sheetMapping
+    .computeIfAbsent(sourceSheet.toLowerCase(), k -> new HashMap<>()) // Convert to lowercase
+    .put(sourceColumn.toLowerCase(), destColumn.toLowerCase());      // Convert to lowercase
