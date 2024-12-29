@@ -1,0 +1,366 @@
+package test.fast.dataConversionTests;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import com.nyl.base.WebBase;
+
+public class TRADToTDSheet extends WebBase{
+	
+	@Parameters({"sourceFile", "destinationFile", "destinationSheetName", "mappingFile"})
+	@Test
+	public void mergeExcelData(String sourceFile, String destinationFile, String destinationSheetName, String mappingFile) {
+	    try {
+	        // Load mapping from the mapping.xlsx file
+	        Map<String, Map<String, String>> sheetMapping = loadMapping(mappingFile);
+
+	        try (Workbook sourceWorkbook = new XSSFWorkbook(new FileInputStream(sourceFile));
+	             Workbook destinationWorkbook = new XSSFWorkbook(new FileInputStream(destinationFile));
+	             FileOutputStream fos = new FileOutputStream(destinationFile)) {
+
+	            Sheet destinationSheet = destinationWorkbook.getSheet(destinationSheetName);
+	            if (destinationSheet == null) {
+	                destinationSheet = destinationWorkbook.createSheet(destinationSheetName);
+	            }
+
+	            // Determine the starting row for appending new records
+	            int destRowCount = destinationSheet.getLastRowNum() + 1;
+	            if (destRowCount <= 1) {
+	                destRowCount = 2; // Start appending from the 3rd row (after the header row)
+	            }
+
+	            int testCaseCounter = destRowCount - 1; // Adjust TC_Number increment
+
+	            // Map to track destination rows by policy number
+	            Map<String, Row> policyRowMap = new HashMap<>();
+
+	            // Process each source sheet
+	            for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
+	                String sourceSheetName = entry.getKey();
+	                Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+	                if (sourceSheet == null) continue;
+
+	                Row headerRow = findHeaderRow(sourceSheet, entry.getValue().keySet());
+	                if (headerRow == null) continue;
+
+	                Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+
+	                for (Row row : sourceSheet) {
+	                    if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+	                    // Get the policy number
+	                    int policyColIndex = columnIndices.getOrDefault("policynumber", -1);
+	                    if (policyColIndex == -1) continue;
+
+	                    Cell policyCell = row.getCell(policyColIndex);
+	                    if (policyCell == null || policyCell.getCellType() == CellType.BLANK) continue;
+
+	                    String policyNumber = getPolicyNumber(policyCell);
+	                    if (policyNumber == null) continue;
+
+	                    // Get or create the destination row
+	                    Row destRow = policyRowMap.get(policyNumber);
+	                    if (destRow == null) {
+	                        destRow = destinationSheet.createRow(destRowCount++);
+	                        policyRowMap.put(policyNumber, destRow);
+	                    }
+
+	                    // Copy data for mapped columns
+	                    for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
+	                        int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
+	                        int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
+	                        if (sourceColIndex == -1 || destColIndex == -1) continue;
+
+	                        copyCell(row, destRow, sourceColIndex, destColIndex, destinationWorkbook);
+	                    }
+	                }
+	            }
+
+	            // Add static fields for all rows in the policyRowMap
+	            for (Map.Entry<String, Row> entry : policyRowMap.entrySet()) {
+	                Row row = entry.getValue();
+	                addStaticFields(destinationSheet, row, ++testCaseCounter);
+	            }
+
+	            // Write back to the destination file
+	            destinationWorkbook.write(fos);
+	            System.out.println("Data merged successfully with dynamic mapping!");
+
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+		private static String getPolicyNumber(Cell policyCell) {
+		
+			switch (policyCell.getCellType()) {
+			case STRING:
+				return policyCell.getStringCellValue().trim();
+			case NUMERIC:
+				return String.valueOf((long) policyCell.getNumericCellValue());
+			default:
+				return null;
+			}
+		}
+
+	    private static Map<String, Map<String, String>> loadMapping(String mappingFile) throws IOException {
+	        Map<String, Map<String, String>> sheetMapping = new HashMap<>();
+
+	        try (Workbook mappingWorkbook = new XSSFWorkbook(new FileInputStream(mappingFile))) {
+	            Sheet mappingSheet = mappingWorkbook.getSheetAt(0);
+	            for (Row row : mappingSheet) {
+	                if (row.getRowNum() == 0) continue; // Skip header row
+
+	                Cell sourceSheetCell = row.getCell(0);
+	                Cell sourceColumnCell = row.getCell(1);
+	                Cell destColumnCell = row.getCell(2);
+
+	                if (sourceSheetCell == null || sourceColumnCell == null || destColumnCell == null) continue;
+
+	                String sourceSheet = sourceSheetCell.getStringCellValue().trim();
+	                String sourceColumn = sourceColumnCell.getStringCellValue().trim();
+	                String destColumn = destColumnCell.getStringCellValue().trim();
+	                /*
+	                sheetMapping
+	                        .computeIfAbsent(sourceSheet, k -> new HashMap<>())
+	                        .put(sourceColumn, destColumn);
+	                */
+	                sheetMapping
+	                .computeIfAbsent(sourceSheet.toLowerCase(), k -> new HashMap<>()) // Convert to lowercase
+	                .put(sourceColumn.toLowerCase(), destColumn.toLowerCase());      // Convert to lowercase
+	            }
+	        }
+
+	        return sheetMapping;
+	    }
+
+	    private static Row findHeaderRow(Sheet sheet, Iterable<String> columnNames) {
+	       Set<String> columnNameSet = new HashSet<>();
+	       //columnNames.forEach(columnNameSet::add);
+	       columnNames.forEach(name -> columnNameSet.add(name.toLowerCase()));
+	    	
+	       for (Row row : sheet) {
+	    	   if (row == null) continue;
+	            for (Cell cell : row) {
+	                if (cell != null && cell.getCellType() == CellType.STRING) {
+	                	String cellValue = cell.getStringCellValue().trim().toLowerCase();
+	                	if (columnNameSet.contains(cellValue)) {
+	                		return row;
+	                	}
+	                }	                
+	            }
+	        }
+	        return null; 
+	    }
+
+	    private static boolean isRowEmpty(Row row) {
+	        if (row == null) return true;
+	        for (Cell cell : row) {
+	            if (cell != null && cell.getCellType() != CellType.BLANK) {
+	                return false;
+	            }
+	        }
+	        return true;
+	    }
+	    
+	    private static Map<String, Integer> getColumnIndices(Row headerRow, Iterable<String> columnNames) {
+	        Map<String, Integer> indices = new HashMap<>();
+	        Set<String> columnNameSet = new HashSet<>();
+	        columnNames.forEach(name -> columnNameSet.add(name.toLowerCase())); // Convert to lowercase
+
+	        for (Cell cell : headerRow) {
+	            if (cell.getCellType() == CellType.STRING) {
+	                String columnName = cell.getStringCellValue().trim().toLowerCase(); // Convert to lowercase
+	                if (columnNameSet.contains(columnName)) {
+	                    indices.put(columnName, cell.getColumnIndex());
+	                }
+	            }
+	        }
+	        return indices;
+	    }
+	    
+	    /*
+	    private static Map<String, Integer> getColumnIndices(Row headerRow, Iterable<String> columnNames) {
+	        Map<String, Integer> indices = new HashMap<>();
+	        Set<String> columnNameSet = new HashSet<>();
+	        columnNames.forEach(columnNameSet::add);
+	        for (Cell cell : headerRow) {
+	            if (cell.getCellType() == CellType.STRING && columnNameSet.contains(cell.getStringCellValue().trim())) {
+	                indices.put(cell.getStringCellValue().trim(), cell.getColumnIndex());
+	            }
+	        }
+	        return indices;
+	    }
+	    */
+
+	    private static int getExistingColumnIndex(Sheet sheet, String columnName) {
+	        // Header is in the second row (index 1)
+	    	Row headerRow = sheet.getRow(1);
+	        if (headerRow != null) {
+	            for (Cell cell : headerRow) {
+	                if (cell.getCellType() == CellType.STRING && columnName.equals(cell.getStringCellValue().trim().toLowerCase())) {
+	                    return cell.getColumnIndex();
+	                }
+	            }
+	        }
+	        return -1; // Column does not exist
+	    }
+
+	    private static boolean columnExists(Sheet sheet, String columnName) {
+	        return getExistingColumnIndex(sheet, columnName) != -1;
+	    }
+	    
+	    private static void addStaticFields(Sheet sheet, Row row, int testCaseCounter) {
+	    	if (columnExists(sheet, "TC_Number")) {
+	    		Cell cell = row.createCell(getExistingColumnIndex(sheet,"TC_Number"));
+	    		cell.setCellValue(String.format("TC%03d", testCaseCounter));
+	    	}
+	    	
+	    	if (columnExists(sheet, "TC_Name")) {
+	    		Cell cell = row.createCell(getExistingColumnIndex(sheet,"TC_Name"));
+	    		cell.setCellValue("UI Fields Validation");
+	    	}
+	    	
+	    	if (columnExists(sheet, "TC_Category")) {
+	    		Cell cell = row.createCell(getExistingColumnIndex(sheet,"TC_Category"));
+	    		cell.setCellValue("Sanity Test");
+	    	}
+	    
+	    	if (columnExists(sheet, "Execution")) {
+	    		Cell cell = row.createCell(getExistingColumnIndex(sheet,"Execution"));
+	    		cell.setCellValue("Yes");
+	    	}
+	    	
+	    }
+
+	    private static void copyCell(Row sourceRow, Row destRow, int sourceColIndex, int destColIndex, Workbook destWorkbook) {
+	       Cell sourceCell = sourceRow.getCell(sourceColIndex);
+	    	if (sourceCell == null) return;
+	    	
+	    	Cell destCell = destRow.createCell(destColIndex);
+	    	
+	    	// Copy value and format
+	        switch (sourceCell.getCellType()) {
+	            case STRING:
+	                destCell.setCellValue(sourceCell.getStringCellValue());
+	                break;
+	            case NUMERIC:
+	                if (DateUtil.isCellDateFormatted(sourceCell)) {
+	                    destCell.setCellValue(sourceCell.getDateCellValue());
+	                } else {
+	                    destCell.setCellValue(sourceCell.getNumericCellValue());
+	                }
+	                break;
+	            case BOOLEAN:
+	                destCell.setCellValue(sourceCell.getBooleanCellValue());
+	                break;
+	            case FORMULA:
+	                destCell.setCellFormula(sourceCell.getCellFormula());
+	                break;
+	            default:
+	                destCell.setCellValue("");
+	                break;
+	        }
+
+	        // Copy style
+	        if (sourceCell.getCellStyle() != null) {
+	        	CellStyle newStyle = destWorkbook.createCellStyle();
+	        	copyCellStyle(sourceCell.getCellStyle(), newStyle, destWorkbook);
+	        	destCell.setCellStyle(newStyle);
+	        }
+	    }
+	    
+	    private static void copyCellStyle(CellStyle sourceStyle, CellStyle destStyle, Workbook destWorkbook) {
+	    	destStyle.cloneStyleFrom(sourceStyle);
+	    	
+	    	// Ensure fonts are copied properly
+	    	Font sourceFont = destWorkbook.getFontAt(sourceStyle.getFontIndex());
+	    	Font destFont = destWorkbook.createFont();
+	    	copyFont(sourceFont, destFont);
+	    	destStyle.setFont(destFont);
+	    	
+	    }
+	    
+	    private static void copyFont(Font sourceFont, Font destFont) {
+	    	destFont.setFontName(sourceFont.getFontName());
+	    	destFont.setFontHeight(sourceFont.getFontHeight());
+	    	destFont.setBold(sourceFont.getBold());
+	    	destFont.setItalic(sourceFont.getItalic());
+	    	destFont.setStrikeout(sourceFont.getStrikeout());
+	    	destFont.setColor(sourceFont.getColor());
+	    	destFont.setTypeOffset(sourceFont.getTypeOffset());
+	    	destFont.setUnderline(sourceFont.getUnderline());
+	    }
+	    
+	    /*
+	    private static void copyCell(Row sourceRow, Row destRow, Integer sourceColIndex, int destColIndex) {
+	        if (sourceColIndex == null || sourceColIndex < 0 || destColIndex < 0) return;
+	        Cell sourceCell = sourceRow.getCell(sourceColIndex);
+	        if (sourceCell == null) return;
+
+	        Cell destCell = destRow.createCell(destColIndex);
+
+	        switch (sourceCell.getCellType()) {
+	            case STRING:
+	                destCell.setCellValue(sourceCell.getStringCellValue());
+	                break;
+	            case NUMERIC:
+	                destCell.setCellValue(sourceCell.getNumericCellValue());
+	                break;
+	            case BOOLEAN:
+	                destCell.setCellValue(sourceCell.getBooleanCellValue());
+	                break;
+	            case FORMULA:
+	                destCell.setCellFormula(sourceCell.getCellFormula());
+	                break;
+	            default:
+	                destCell.setCellValue("");
+	                break;
+	        }
+	    }
+	    */
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "../../drivers/testng-1.0.dtd">
+<suite name="Suite" data-provider-thread-count="1">
+<parameter name="SuiteName" value="TRAD to TD Sheet" />
+<parameter name="testType" value="Sanity Test" />
+<parameter name="sourceFile" value="${user.dir}\\inputFiles\\NYLRL_Transactions\\TRAD_Input.xlsx"/>
+<parameter name="destinationFile" value="${user.dir}\\inputFiles\\NYLRL_Transactions\\RL_TestData.xlsx"/> 
+<parameter name="mappingFile" value="${user.dir}\\inputFiles\\NYLRL_Transactions\\mapping.xlsx"/> 
+<parameter name="destinationSheetName" value="PolicyDataAtIssue"/>
+  <test name="Test">
+    <classes>
+      <class name="test.fast.dataConversionTests.TRADToTDSheet"/>
+    </classes>
+  </test> <!-- Test -->
+</suite> <!-- Suite -->
