@@ -457,3 +457,52 @@ public class TRADToTDSheet extends WebBase{
 	    */
 
 }
+
+
+
+
+// Map to track destination rows by policy number (move outside the loop)
+Map<String, Row> policyRowMap = new HashMap<>();
+
+for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
+    String sourceSheetName = entry.getKey();
+    Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+    if (sourceSheet == null) continue;
+
+    Row headerRow = findHeaderRow(sourceSheet, entry.getValue().keySet());
+    if (headerRow == null) continue;
+
+    Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+    for (Row row : sourceSheet) {
+        if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+        // Get the policy number
+        int policyColIndex = columnIndices.getOrDefault("policynumber", -1);
+        if (policyColIndex == -1) continue;
+
+        Cell policyCell = row.getCell(policyColIndex);
+        if (policyCell == null || policyCell.getCellType() == CellType.BLANK) continue;
+
+        String policyNumber = getPolicyNumber(policyCell);
+        if (policyNumber == null) continue;
+
+        // Get or create the destination row
+        Row destRow = policyRowMap.get(policyNumber);
+        if (destRow == null) {
+            destRow = destinationSheet.createRow(destRowCount++);
+            policyRowMap.put(policyNumber, destRow);
+        }
+
+        // Copy data for mapped columns
+        for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
+            int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
+            int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
+            if (sourceColIndex == -1 || destColIndex == -1) continue;
+
+            copyCell(row, destRow, sourceColIndex, destColIndex, destinationWorkbook);
+        }
+
+        // Add static fields for the policy record
+        addStaticFields(destinationSheet, destRow, testCaseCounter++);
+    }
+}
