@@ -506,3 +506,88 @@ for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
         addStaticFields(destinationSheet, destRow, testCaseCounter++);
     }
 }
+
+
+
+
+
+
+@Parameters({"sourceFile", "destinationFile", "destinationSheetName", "mappingFile"})
+@Test
+public void mergeExcelData(String sourceFile, String destinationFile, String destinationSheetName, String mappingFile) {
+    try {
+        // Load mapping from the mapping.xlsx file
+        Map<String, Map<String, String>> sheetMapping = loadMapping(mappingFile);
+
+        try (Workbook sourceWorkbook = new XSSFWorkbook(new FileInputStream(sourceFile));
+             Workbook destinationWorkbook = new XSSFWorkbook(new FileInputStream(destinationFile));
+             FileOutputStream fos = new FileOutputStream(destinationFile)) {
+
+            Sheet destinationSheet = destinationWorkbook.getSheet(destinationSheetName);
+            if (destinationSheet == null) {
+                destinationSheet = destinationWorkbook.createSheet(destinationSheetName);
+            }
+
+            // Determine the starting row for appending new records
+            int destRowCount = destinationSheet.getLastRowNum() + 1;
+            if (destRowCount <= 1) {
+                destRowCount = 2; // Start appending from the 3rd row (after the header row)
+            }
+
+            int testCaseCounter = destRowCount + 1; // Start TC_Number increment from the last record
+
+            // Map to track destination rows by policy number
+            Map<String, Row> policyRowMap = new HashMap<>();
+
+            for (Map.Entry<String, Map<String, String>> entry : sheetMapping.entrySet()) {
+                String sourceSheetName = entry.getKey();
+                Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+                if (sourceSheet == null) continue;
+
+                Row headerRow = findHeaderRow(sourceSheet, entry.getValue().keySet());
+                if (headerRow == null) continue;
+
+                Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+                for (Row row : sourceSheet) {
+                    if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+                    // Get the policy number
+                    int policyColIndex = columnIndices.getOrDefault("policynumber", -1);
+                    if (policyColIndex == -1) continue;
+
+                    Cell policyCell = row.getCell(policyColIndex);
+                    if (policyCell == null || policyCell.getCellType() == CellType.BLANK) continue;
+
+                    String policyNumber = getPolicyNumber(policyCell);
+                    if (policyNumber == null) continue;
+
+                    // Get or create the destination row
+                    Row destRow = policyRowMap.get(policyNumber);
+                    if (destRow == null) {
+                        destRow = destinationSheet.createRow(destRowCount++);
+                        policyRowMap.put(policyNumber, destRow);
+                    }
+
+                    // Copy data for mapped columns
+                    for (Map.Entry<String, String> colEntry : entry.getValue().entrySet()) {
+                        int sourceColIndex = columnIndices.getOrDefault(colEntry.getKey(), -1);
+                        int destColIndex = getExistingColumnIndex(destinationSheet, colEntry.getValue());
+                        if (sourceColIndex == -1 || destColIndex == -1) continue;
+
+                        copyCell(row, destRow, sourceColIndex, destColIndex, destinationWorkbook);
+                    }
+
+                    // Add static fields for the policy record
+                    addStaticFields(destinationSheet, destRow, testCaseCounter);
+                }
+            }
+
+            // Write back to the destination file
+            destinationWorkbook.write(fos);
+            System.out.println("Data merged successfully with dynamic mapping!");
+
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
