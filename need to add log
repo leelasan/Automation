@@ -194,3 +194,78 @@ public class CreatePolicyWithAPI_RestAssured extends WebBase {
 	}
 
 }
+
+
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+public class CreatePolicyWithAPI_RestAssured extends WebBase {
+    private static final String METRICS_CSV_FILE = "execution_metrics.csv"; // CSV file for execution metrics
+    private LocalDateTime executionStartTime;
+    private LocalDateTime executionEndTime;
+    private int policiesCreated;
+
+    @BeforeClass(alwaysRun = true)
+    public void reportInitialization() {
+        executionStartTime = LocalDateTime.now(); // Track start time
+        policiesCreated = 0; // Initialize counter
+
+        initializeCsvFile(); // Ensure the CSV file header exists
+
+        // Existing code...
+    }
+
+    @Test
+    public void createPolicy(ITestContext context) throws Exception {
+        // Existing code...
+        try {
+            for (File file : listOfFiles) {
+                if (file.isFile()) {
+                    // Existing code...
+                    String policyNumber = createPolicy(token, encodedXML);
+                    policiesCreated++; // Increment counter
+                    // Existing code...
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Existing code...
+        }
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void reporee(ITestContext result) {
+        executionEndTime = LocalDateTime.now(); // Track end time
+        logExecutionMetricsToCsv(); // Log metrics to CSV
+        // Existing code...
+    }
+
+    private void initializeCsvFile() {
+        try (FileWriter writer = new FileWriter(METRICS_CSV_FILE, true)) {
+            // Write header if the file is empty
+            File csvFile = new File(METRICS_CSV_FILE);
+            if (csvFile.length() == 0) {
+                writer.write("Execution Start,Execution End,Duration (minutes),Policies Created\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void logExecutionMetricsToCsv() {
+        try (FileWriter writer = new FileWriter(METRICS_CSV_FILE, true)) {
+            Duration duration = Duration.between(executionStartTime, executionEndTime);
+            String logEntry = String.format(
+                "%s,%s,%d,%d\n",
+                executionStartTime, executionEndTime, duration.toMinutes(), policiesCreated
+            );
+            writer.write(logEntry);
+            System.out.println("Execution metrics logged to CSV successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
