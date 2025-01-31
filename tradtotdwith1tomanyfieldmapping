@@ -1,0 +1,334 @@
+package test.trdtotd;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+public class TRADToTDSheet {
+
+    @Parameters({"sourceFile", "destinationFile", "destinationSheetName", "mappingFile"})
+    @Test
+    public void mergeExcelData(String sourceFile, String destinationFile, String destinationSheetName, String mappingFile) {
+        try {
+            Map<String, Map<String, Set<String>>> sheetMapping = loadMapping(mappingFile, "FieldMapping");
+            Map<String, Map<String, Map<String, String>>> valueMapping = loadValueMapping(mappingFile, "ValueMapping");
+
+            try (Workbook sourceWorkbook = new XSSFWorkbook(new FileInputStream(sourceFile));
+                 Workbook destinationWorkbook = new XSSFWorkbook(new FileInputStream(destinationFile));
+                 FileOutputStream fos = new FileOutputStream(destinationFile)) {
+
+                Sheet destinationSheet = destinationWorkbook.getSheet(destinationSheetName);
+                if (destinationSheet == null) {
+                    destinationSheet = destinationWorkbook.createSheet(destinationSheetName);
+                }
+
+                int destRowCount = destinationSheet.getLastRowNum() + 1;
+                if (destRowCount <= 1) {
+                    destRowCount = 2; // Start appending from the 3rd row
+                }
+
+                int testCaseCounter = destRowCount - 2; // Adjust TC_Number increment
+
+                Map<String, Row> policyRowMap = new HashMap<>();
+
+                for (Map.Entry<String, Map<String, Set<String>>> entry : sheetMapping.entrySet()) {
+                    String sourceSheetName = entry.getKey();
+                    Sheet sourceSheet = sourceWorkbook.getSheet(sourceSheetName);
+
+                    if (sourceSheet == null) {
+                        System.err.println("Source sheet not found: " + sourceSheetName);
+                        continue;
+                    }
+
+                    Row headerRow = findHeaderRow(sourceSheet, entry.getValue().keySet());
+                    if (headerRow == null) {
+                        System.err.println("Header row not found for sheet: " + sourceSheetName);
+                        continue;
+                    }
+
+                    Map<String, Integer> columnIndices = getColumnIndices(headerRow, entry.getValue().keySet());
+
+                    for (Row row : sourceSheet) {
+                        if (row.getRowNum() <= headerRow.getRowNum() || isRowEmpty(row)) continue;
+
+                        String policyNumber = getPolicyNumber(row, columnIndices.get("policynumber"));
+                        if (policyNumber == null || policyNumber.isEmpty()) continue;
+
+                        Row destRow = policyRowMap.get(policyNumber);
+                        if (destRow == null) {
+                            destRow = destinationSheet.createRow(destRowCount);
+                            policyRowMap.put(policyNumber, destRow);
+                            destRowCount++;
+                        }
+
+                        if (destRow.getCell(0) == null) {
+                            addStaticFieldsIfAbsent(destinationSheet, destRow, ++testCaseCounter);
+                        }
+
+                        Map<String, Set<String>> columnMappings = entry.getValue();
+                        for (Map.Entry<String, Set<String>> colEntry : columnMappings.entrySet()) {
+                            String sourceColumn = colEntry.getKey();
+                            Set<String> destColumns = colEntry.getValue();
+
+                            int sourceColIndex = columnIndices.getOrDefault(sourceColumn.toLowerCase(), -1);
+                            if (sourceColIndex == -1) continue;
+
+                            for (String destColumn : destColumns) {
+                                int destColIndex = getExistingColumnIndex(destinationSheet, destColumn);
+                                if (destColIndex == -1) continue;
+
+                                Cell sourceCell = row.getCell(sourceColIndex);
+                                if (sourceCell == null) continue;
+
+                                Cell destCell = destRow.getCell(destColIndex);
+                                if (destCell == null) destCell = destRow.createCell(destColIndex);
+
+                                String transformedValue = applyValueMapping(valueMapping, sourceSheetName, sourceColumn, sourceCell);
+
+                                if (transformedValue != null) {
+                                    destCell.setCellValue(transformedValue);
+                                } else {
+                                    copyCell(sourceCell, destCell);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                destinationWorkbook.write(fos);
+                System.out.println("Data merged successfully with dynamic mapping and preserved formatting!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void addStaticFieldsIfAbsent(Sheet destinationSheet, Row destRow, int testCaseCounter) {
+        String[] staticFieldHeaders = {"tc_number", "tc_name", "test_category", "execution"};
+        String[] staticFieldValues = {
+                String.format("TC%03d", testCaseCounter),
+                "UI Fields Validation",
+                "Sanity Test",
+                "Yes"
+        };
+
+        for (int i = 0; i < staticFieldHeaders.length; i++) {
+            if (columnExists(destinationSheet, staticFieldHeaders[i])) {
+                int colIndex = getExistingColumnIndex(destinationSheet, staticFieldHeaders[i]);
+                Cell cell = destRow.getCell(colIndex);
+                if (cell == null) {
+                    cell = destRow.createCell(colIndex);
+                    cell.setCellValue(staticFieldValues[i]);
+                }
+            }
+        }
+    }
+
+    private static String getPolicyNumber(Row row, int policyColIndex) {
+        Cell policyCell = row.getCell(policyColIndex);
+        if (policyCell == null) return null;
+
+        switch (policyCell.getCellType()) {
+            case STRING:
+                return policyCell.getStringCellValue().trim();
+            case NUMERIC:
+                return String.valueOf((long) policyCell.getNumericCellValue());
+            default:
+                return null;
+        }
+    }
+
+    private static Map<String, Map<String, Set<String>>> loadMapping(String mappingFile, String sheetName) throws IOException {
+        Map<String, Map<String, Set<String>>> sheetMapping = new HashMap<>();
+        try (Workbook mappingWorkbook = new XSSFWorkbook(new FileInputStream(mappingFile))) {
+            Sheet mappingSheet = mappingWorkbook.getSheet(sheetName);
+            for (Row row : mappingSheet) {
+                if (row.getRowNum() == 0) continue; // Skip header row
+                String sourceSheet = row.getCell(0).getStringCellValue().trim().toLowerCase();
+                String sourceColumn = row.getCell(1).getStringCellValue().trim().toLowerCase();
+                String destColumn = row.getCell(2).getStringCellValue().trim().toLowerCase();
+
+                sheetMapping
+                        .computeIfAbsent(sourceSheet, k -> new HashMap<>())
+                        .computeIfAbsent(sourceColumn, k -> new HashSet<>())
+                        .add(destColumn);
+            }
+        }
+        return sheetMapping;
+    }
+    
+    private static Map<String, Map<String, Map<String, String>>> loadValueMapping(String mappingFile, String sheetName) throws IOException {
+        Map<String, Map<String, Map<String, String>>> valueMapping = new HashMap<>();
+        try (Workbook mappingWorkbook = new XSSFWorkbook(new FileInputStream(mappingFile))) {
+            Sheet valueMappingSheet = mappingWorkbook.getSheet(sheetName);
+            if (valueMappingSheet == null) {
+                throw new IllegalArgumentException("ValueMapping sheet not found in the mapping file.");
+            }
+
+            for (Row row : valueMappingSheet) {
+                if (row.getRowNum() == 0) continue; // Skip header row
+
+                String sheetNameFromRow = getCellValueAsString(row.getCell(0)); // Source sheet name
+                String fieldName = getCellValueAsString(row.getCell(1)); // Field name in the source sheet
+                String actualValue = getCellValueAsString(row.getCell(2)); // Actual value to be mapped
+                String expectedValue = getCellValueAsString(row.getCell(3)); // Expected value in the destination
+
+                if (sheetNameFromRow == null || fieldName == null || actualValue == null || expectedValue == null) {
+                    System.err.println("Invalid data in ValueMapping sheet at row: " + row.getRowNum());
+                    continue;
+                }
+
+                // Populate the mapping structure
+                valueMapping
+                    .computeIfAbsent(sheetNameFromRow.toLowerCase(), k -> new HashMap<>())
+                    .computeIfAbsent(fieldName.toLowerCase(), k -> new HashMap<>())
+                    .put(actualValue, expectedValue);
+            }
+        }
+        return valueMapping;
+    }	    
+
+
+    private static Row findHeaderRow(Sheet sheet, Iterable<String> columnNames) {
+        Set<String> columnNameSet = new HashSet<>();
+        columnNames.forEach(name -> columnNameSet.add(name.toLowerCase()));
+
+        for (Row row : sheet) {
+            if (row == null) continue;
+            for (Cell cell : row) {
+                if (cell != null && cell.getCellType() == CellType.STRING) {
+                    String cellValue = cell.getStringCellValue().trim().toLowerCase();
+                    if (columnNameSet.contains(cellValue)) {
+                        return row;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isRowEmpty(Row row) {
+        if (row == null) return true;
+        for (Cell cell : row) {
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Map<String, Integer> getColumnIndices(Row headerRow, Iterable<String> columnNames) {
+        Map<String, Integer> indices = new HashMap<>();
+        Set<String> columnNameSet = new HashSet<>();
+        columnNames.forEach(name -> columnNameSet.add(name.trim().toLowerCase()));
+
+        for (Cell cell : headerRow) {
+            if (cell.getCellType() == CellType.STRING) {
+                String columnName = cell.getStringCellValue().trim().toLowerCase();
+                if (columnNameSet.contains(columnName)) {
+                    indices.put(columnName, cell.getColumnIndex());
+                }
+            }
+        }
+        return indices;
+    }
+
+    private static int getExistingColumnIndex(Sheet sheet, String columnName) {
+        Row headerRow = sheet.getRow(1);
+        if (headerRow != null) {
+            for (Cell cell : headerRow) {
+                if (cell.getCellType() == CellType.STRING && columnName.equals(cell.getStringCellValue().trim().toLowerCase())) {
+                    return cell.getColumnIndex();
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static boolean columnExists(Sheet sheet, String columnName) {
+        return getExistingColumnIndex(sheet, columnName) != -1;
+    }
+
+    private static String applyValueMapping(Map<String, Map<String, Map<String, String>>> valueMapping, String sourceSheetName, String fieldName, Cell sourceCell) {
+        Map<String, Map<String, String>> sheetMap = valueMapping.get(sourceSheetName.toLowerCase());
+        if (sheetMap == null) return null;
+
+        Map<String, String> fieldMap = sheetMap.get(fieldName.toLowerCase());
+        if (fieldMap == null) return null;
+
+        String actualValue = getCellValueAsString(sourceCell);
+        if (actualValue == null || actualValue.isEmpty()) {
+            return null;
+        }
+
+        return fieldMap.get(actualValue);
+    }
+
+    private static String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf((long) cell.getNumericCellValue());
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                return cell.getCellFormula();
+            case BLANK:
+                return "";
+            default:
+                return cell.toString();
+        }
+    }
+
+    private static void copyCell(Cell sourceCell, Cell destCell) {
+        switch (sourceCell.getCellType()) {
+            case STRING:
+                destCell.setCellValue(sourceCell.getStringCellValue());
+                break;
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(sourceCell)) {
+                    destCell.setCellValue(sourceCell.getDateCellValue());
+                } else {
+                    destCell.setCellValue(sourceCell.getNumericCellValue());
+                }
+                break;
+            case BOOLEAN:
+                destCell.setCellValue(sourceCell.getBooleanCellValue());
+                break;
+            case FORMULA:
+                destCell.setCellFormula(sourceCell.getCellFormula());
+                break;
+            case BLANK:
+                destCell.setBlank();
+                break;
+            case ERROR:
+                destCell.setCellErrorValue(sourceCell.getErrorCellValue());
+                break;
+            default:
+                destCell.setCellValue(sourceCell.toString());
+        }
+
+        if (sourceCell.getCellStyle() != null) {
+            CellStyle newStyle = destCell.getSheet().getWorkbook().createCellStyle();
+            newStyle.cloneStyleFrom(sourceCell.getCellStyle());
+            destCell.setCellStyle(newStyle);
+        }
+    }
+}
