@@ -1,0 +1,55 @@
+package com.nyl.main;
+
+import org.testng.TestNG;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+import java.nio.file.Paths;
+
+public class MainClass {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+		if (args.length <2) {
+			System.out.println("Usage: java -jar your-jar.jar <testng-xml-file> <test-data-sheet>");
+			System.exit(1);
+		}
+		
+		String testngXmlFileName = args[0];
+		String xlsxFilePath = args[1];
+		
+		System.out.println("Running TestNG Suite: "+testngXmlFileName);
+		System.out.println("Using Test Data Sheet: "+xlsxFilePath);
+		
+		//Locate the testNG XML inside the testSuites folder
+		String baseDir = System.getProperty("user.dir");
+		File testngFile = Paths.get(baseDir, "testSuites", testngXmlFileName).toFile();
+		
+		if(!testngFile.exists()) {
+			System.err.println("Error: TestNG XML file not found in the testSuites folder: "+ testngXmlFileName);
+			System.exit(1);
+		}
+		
+		try {
+			// Create a new TestNG instance
+			TestNG testng = new TestNG();
+			
+			// Set the TestNG XML suite file to run
+			testng.setTestSuites(java.util.Collections.singletonList(testngFile.getAbsolutePath()));
+			
+			// Add the test data sheet parameter dynamically
+			XmlSuite suite = new XmlSuite();
+			suite.setName("DynamicSuite");
+			suite.getTests().forEach(test -> test.addParameter("xlsxFilePath", xlsxFilePath));
+			
+			// Run TestNG			
+			testng.run();
+			
+		}catch (Exception e) {
+			System.err.println("Error while running TestNG Suite: "+e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+}
