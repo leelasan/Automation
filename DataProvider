@@ -1,0 +1,314 @@
+package fast.dataProviders;
+
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.testng.annotations.DataProvider;
+import org.testng.ITestContext;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Iterator;
+
+
+public class ReadDataFromXLSX {
+	
+	@DataProvider(name="ReadTestDataFromXLSX", parallel = true)
+	public Object[][] getData(ITestContext context) throws IOException {
+		 
+		//Retrieve the 'testType' and 'filePath' parameters from testng runner
+		String testParam = context.getCurrentXmlTest().getParameter("testType");
+		String filePath = context.getCurrentXmlTest().getParameter("xlsxFilePath");
+		String sheetName = context.getCurrentXmlTest().getParameter("sheetName");
+		
+		//Ensure file path is not null
+		if (filePath == null) {
+			throw new IllegalArgumentException("Parameter 'filePath' not provided in the testng runner");
+		}
+		
+		List<HashMap<String,String>> dataList = new ArrayList<>();
+		
+		//Open the .xlsx file and read the sheet
+		try (FileInputStream fis = new FileInputStream(filePath);
+			Workbook workbook = new XSSFWorkbook(fis)){
+			
+			Sheet sheet = workbook.getSheet(sheetName);
+			if (sheet == null) {
+				throw new IllegalArgumentException("Required sheet not found in the xlsx file");
+			}
+			
+			//Skip the first row and read the second row as the header
+			Row headerRow = sheet.getRow(1); //Get the second row (index 1)
+			if(headerRow == null) {
+				throw new IllegalArgumentException("The header row (second row) is missing in the xlsx file");
+			}
+			
+			//FormulaEvaluator instance
+			FormulaEvaluator evaluator = sheet.getWorkbook().getCreationHelper().createFormulaEvaluator();
+			
+			int executionIndex = -1;
+			int testCategoryIndex = -1;
+			int columnCount = headerRow.getLastCellNum();
+			
+			//Find the indices of the Execution and Test_Category columns
+			for (int i=0; i< columnCount; i++) {
+				String headerName = headerRow.getCell(i).getStringCellValue();
+				if (headerName.equalsIgnoreCase("Execution")) {
+					executionIndex = i;
+				}else if (headerName.equalsIgnoreCase("Test_Category")) {
+					testCategoryIndex = i;
+				}
+			}
+			
+			//If 'Execution' or 'Test_Category' column is not found, throw an exception
+			if(executionIndex == -1) {
+				throw new IllegalArgumentException("Column 'Execution' not found in the xlsx file");
+			}
+			if (testCategoryIndex == -1) {
+				throw new IllegalArgumentException("Column 'Test_Category' not found in the xlsx file");
+			}
+			
+			//Process the remaining rows, starting from the third row (index 2)
+			for (int rowIndex = 2; rowIndex<=sheet.getLastRowNum(); rowIndex++) {
+				Row row = sheet.getRow(rowIndex);
+				if (row == null) {
+					continue;
+				}
+				
+				//Get the "Execution" and "Test_Category" values
+				String executionValue = row.getCell(executionIndex).getStringCellValue();
+				String testCategoryValue = row.getCell(testCategoryIndex).getStringCellValue();
+				
+				//Check if the value in the "Execution" column is "Yes" and matches the testType
+				if ("Yes".equalsIgnoreCase(executionValue) && testParam.equalsIgnoreCase(testCategoryValue)) {
+					HashMap<String, String> dataMap = new HashMap<>();
+					for (int i=0; i<columnCount;i++) {
+						Cell cell = row.getCell(i);
+						String cellValue = evaluateCell(cell,evaluator);
+						//String cellValue = cell != null ? cell.toString() : "";
+						dataMap.put(headerRow.getCell(i).getStringCellValue(), cellValue);
+					}
+					dataList.add(dataMap);
+				}
+			}
+		}
+		
+		//Convert List<HashMap<String, String>> to Object[][]
+		
+		Object[][] data = new Object[dataList.size()][1];
+		for(int i=0; i< dataList.size(); i++) {
+			data[i][0] = dataList.get(i);
+		}
+		
+		return data;
+	}
+	
+	//Helper method to evaluate a cell's value or formula
+	public String evaluateCell(Cell cell, FormulaEvaluator evaluator) {
+		String result = "";
+		
+		if(cell!= null) {
+			switch (cell.getCellType()) {
+				
+				case NUMERIC:
+					// Check if the numeric value is a date
+					if (DateUtil.isCellDateFormatted(cell)) {
+						String cellReference = getCellReference(cell);
+						//Format the date as per need (e.g., "MM/dd/yyyy")
+						SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+						Date date = cell.getDateCellValue();
+						result = dateFormat.format(date);
+						
+						//result = FormatDate(cell.toString(),"MM/dd/yyyy");
+					}else {
+						//It's a regular numeric cell, check if it's an integer
+						double numericValue = cell.getNumericCellValue();
+						if(numericValue == Math.floor(numericValue)) {
+							//It's an integer
+							result = String.valueOf((int) numericValue);
+						}else {
+							//it's a floating point number, keep it's precision
+							result = String.valueOf(numericValue);
+						}	
+					}
+					break;
+				case STRING:
+					result = cell.getStringCellValue();
+					break;
+				
+				case FORMULA:
+					//Evaluate the formula and retrieve the result
+					CellValue cellValue = evaluator.evaluate(cell);
+					switch (cellValue.getCellType()){
+						case NUMERIC: 
+							//check if the formula result is a date
+							if (DateUtil.isCellDateFormatted(cell)) {
+								String cellReference = getCellReference(cell);
+								//Format the date if the result is a date
+								SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+								Date date = cell.getDateCellValue();
+								result = dateFormat.format(date);
+								
+								//result = FormatDate(cell.toString(),"MM/dd/yyyy");
+							}else {
+								//It's a regular numeric cell, check if it's an integer
+								double numericValue = cell.getNumericCellValue();
+								if(numericValue == Math.floor(numericValue)) {
+									//It's an integer
+									result = String.valueOf((int) numericValue);
+								}else {
+									//it's a floating point number, keep it's precision
+									result = String.valueOf(numericValue);
+								}	
+							}
+							break;
+						case STRING:
+							result = cellValue.getStringValue();
+							break;
+						default:
+							result = "Unsupported cell type";
+							break;
+					}
+					break;
+				default:
+					result = "";
+					break;
+			}
+		}
+		return result;
+	}
+	
+	// Helper method for Formatting the data
+	public String FormatDate(String expectedValue, String opFormat) {
+		
+		//Define possible input date formats
+		String[] possibleFormats = {
+				"M/d/yyyy", "dd-MMM-yyyy", "MM-dd-yyyy", "yyyy-MM-dd", "yyyy/MM/dd",
+				"MMM d, yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "dd-MM-yyyy"};
+		
+		//Defined the desired output format
+		SimpleDateFormat outputFormat = new SimpleDateFormat(opFormat);
+		
+		Date date = null;
+		
+		//Try parsing the date using each format in the list
+		for (String format: possibleFormats) {
+			try {
+				SimpleDateFormat inputFormat = new SimpleDateFormat(format);
+				date = inputFormat.parse(expectedValue);
+				break;
+			}catch (ParseException e) {
+				//continue to the next format if parsing fails
+			}
+		}
+		
+		//If a valid date was parsed, format it to the desired output format
+		if (date != null) {
+			expectedValue = outputFormat.format(date); //This should convert the date to MM/dd/yyyy
+			return expectedValue;
+		}else {
+			//If no format was successful return the value as-is for validation
+			return expectedValue;
+		}
+	}
+	
+	// Helper method for getting the Cell reference
+	public String getCellReference(Cell cell) {
+		int rowIndex = cell.getRowIndex();
+		int colIndex = cell.getColumnIndex();
+		
+		//Convert the column index to column letter
+		String columnLetter = CellReference.convertNumToColString(colIndex);
+		
+		//Combine column letter + row number
+		return columnLetter + (rowIndex+1);
+	}
+	
+	// Data provider for updating the XML file for Policy Creation transaction
+    @DataProvider(name = "xmlUpdateData", parallel = true)
+    public static Iterator<Object[]> xmlUpdateData(ITestContext context) throws IOException {
+    	
+    	String filePath = context.getCurrentXmlTest().getParameter("xlsxFilePath");
+    	String temlateName = context.getCurrentXmlTest().getParameter("temlateName");
+    	
+        List<Object[]> data = new ArrayList<>();
+        FileInputStream file = new FileInputStream(filePath);
+        Workbook workbook = new XSSFWorkbook(file);
+
+        // Load PolicyData_New sheet
+        Sheet policyDataSheet = workbook.getSheet("PolicyData");
+        Row headerRow = policyDataSheet.getRow(0);
+
+        // Load TC_Mapping sheet into a lookup map
+        Map<String, String> tcMapping = loadTCMapping(workbook.getSheet("TC_Mapping"));
+
+        for (int rowIndex = 1; rowIndex <= policyDataSheet.getLastRowNum(); rowIndex++) {
+            Row row = policyDataSheet.getRow(rowIndex);
+            if (row == null) continue;
+
+            String testCaseName = row.getCell(0).getStringCellValue();  // Assume test case name is in the first column
+            String execution = row.getCell(1).getStringCellValue();     // Execution indicator in the second column
+
+            if ("Yes".equalsIgnoreCase(execution)) {
+                List<Object[]> updates = new ArrayList<>();
+                
+                for (int colIndex = 2; colIndex < headerRow.getLastCellNum(); colIndex++) {
+                    Cell headerCell = headerRow.getCell(colIndex);
+                    Cell dataCell = row.getCell(colIndex);
+                    
+                    if (headerCell != null && dataCell != null) {
+                        String headerName = headerCell.getStringCellValue();
+                        String nodeValue = dataCell.getStringCellValue();
+
+                        // Split header name by '#' to get Node_Name and Condition if present
+                        String[] parts = headerName.split("#");
+                        String nodeName = parts[0];
+                        String condition = parts.length > 1 ? parts[1] : "";
+
+                        // Lookup in TC_Mapping if nodeValue is a Field_Value and get the TypeCode for the attribute
+                        String attributeValue = tcMapping.getOrDefault(nodeName + "#" + nodeValue, null);
+
+                        updates.add(new Object[]{nodeName, attributeValue, nodeValue, condition});
+                    }
+                }
+                
+                data.add(new Object[]{testCaseName, temlateName, updates});
+            }
+        }
+
+        workbook.close();
+        file.close();
+
+        return data.iterator();
+    }
+    
+    // Helper method for xmlUpdateData data provider
+    private static Map<String, String> loadTCMapping(Sheet mappingSheet) {
+        Map<String, String> mapping = new HashMap<>();
+        
+        for (int rowIndex = 1; rowIndex <= mappingSheet.getLastRowNum(); rowIndex++) {
+            Row row = mappingSheet.getRow(rowIndex);
+            if (row == null) continue;
+
+            String fieldName = row.getCell(0).getStringCellValue();
+            String fieldValue = row.getCell(1).getStringCellValue();
+            String typeCode = row.getCell(2).getStringCellValue();
+
+            // Combine Field_Name and Field_Value as the key, mapping to TypeCode
+            mapping.put(fieldName + "#" + fieldValue, typeCode);
+        }
+
+        return mapping;
+    }
+}
