@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "../../drivers/testng-1.0.dtd">
+<suite name="Suite" data-provider-thread-count="1">
+<parameter name="SuiteName" value="FAST UI Fields Validations for TL" />
+<parameter name="testType" value="Sanity Test" />
+<parameter name="xlsxFilePath" value="${user.dir}\\inputFiles\\NYLRL_Transactions\\RL_TestData.xlsx"/> 
+<parameter name="sheetName" value="PolicyDataAtIssue"/>
+  <test name="Test">
+    <classes>
+      <class name="test.fast.functionalTests.coreTests.UIFieldsValidationForTL"/>
+    </classes>
+  </test> <!-- Test -->
+</suite> <!-- Suite -->
