@@ -1,0 +1,1420 @@
+package test.fast.functionalTests.coreTests;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.ITestResult;
+import org.testng.Reporter;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.nyl.base.WebBase;
+import com.nyl.pages.commissionsScreens.CommissionsPayableReportPage;
+import com.nyl.pages.homeScreens.FASTLoginPage;
+import com.nyl.pages.homeScreens.PolicyHomePage;
+import com.nyl.pages.policyCoveragesScreens.CoverageSummaryPage;
+import com.nyl.pages.policyExternalAgentScreens.ExternalAgentPage;
+import com.nyl.pages.policyExternalAgentScreens.ExternalAgentSummaryPage;
+import com.nyl.pages.popupScreens.ExternalContractUpdatePopupScreen;
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+import com.relevantcodes.extentreports.model.ITest;
+import com.relevantcodes.extentreports.model.Log;
+
+import fast.retryTestCases.RetryAnalyzer;
+
+public class UIFieldsValidationForTL extends WebBase {
+
+	public static ExtentReports mainReport;
+	public HashMap<String, Integer> testCaseRetryCount = new HashMap<String, Integer>();
+	public String folderPath;
+
+	@BeforeClass(alwaysRun = true)
+	public void reportInitialization() {
+		Properties prop = new Properties();
+        try (FileInputStream fis = new FileInputStream("config.properties")) {
+            prop.load(fis);
+        }catch(IOException e) {
+			e.printStackTrace();
+		}
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
+		LocalDateTime now = LocalDateTime.now();
+		folderPath = ".//Reports/Functional Test Reports/UIFieldsValidationForTL/Test Report_" + dtf.format(now);
+		//folderPath = prop.getProperty("ResultsFolder") + "\\UIFieldsValidationForTL\\Test Report_"+dtf.format(now);
+		
+		fileName = folderPath + "/FAST UI Fields Validation For TL.html";
+		mainReport = new ExtentReports(fileName);
+		mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
+	}
+
+	@Test(retryAnalyzer = RetryAnalyzer.class, dataProvider = "ReadTestDataFromXLSX", dataProviderClass =fast.dataProviders.ReadDataFromXLSX.class)
+	public void PolicyDataValidation(HashMap<String, String> data) {
+		
+		if(testCaseRetryCount.get(data.get("PolicyNumber"))==null)
+			testCaseRetryCount.put(data.get("PolicyNumber"), Integer.valueOf("1"));
+		else
+		{
+			int count=testCaseRetryCount.get(data.get("PolicyNumber"));
+			testCaseRetryCount.put(data.get("PolicyNumber"), ++count);
+		}
+		
+		ITestResult result = Reporter.getCurrentTestResult();
+		String methodName = result.getMethod().getMethodName();
+		ignoreSkippedTests = true;
+		ExtentTest subTest = null;
+		ExtentTest test = null;
+		WebDriver driver = null;
+		try {
+			boolean includeBlankValue=false;
+			System.setProperty("webdriver.chrome.driver", ".\\drivers\\chromedriver.exe");
+			driver = new ChromeDriver();
+			driver.manage().window().maximize();
+			driver.get(EnvParameters.envURL);
+			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+			ExtentReports report = new ExtentReports("dummy.html");
+			//test = report.startTest(data.get("TC_Number")+"- "+data.get("TC_Name"));
+			test = report.startTest(data.get("TC_Name")+"- "+data.get("PolicyNumber"));
+			
+			CoverageSummaryPage coverageSummaryPage = new CoverageSummaryPage(driver, subTest, folderPath);
+			ExternalAgentPage externalAgentPage = new ExternalAgentPage(driver, subTest, folderPath);
+			ExternalAgentSummaryPage externalAgentSummaryPage = new ExternalAgentSummaryPage(driver, subTest, folderPath);
+			CommissionsPayableReportPage commissionsPayableReportPage = new CommissionsPayableReportPage(driver, subTest, folderPath);
+			ExternalContractUpdatePopupScreen externalContractUpdatePopupScreen = new ExternalContractUpdatePopupScreen(driver, subTest, folderPath);
+			
+			subTest = report.startTest("Login to FAST APP and search the policy number " + data.get("PolicyNumber"));
+			
+			PolicyHomePage policyHomePage = new FASTLoginPage(driver, subTest, folderPath).enterUserName()
+					.enterPassword().clickLoginButton().waitUntilPageLoads().setSearchFilterAsPolicyNumber()
+					.enterTextInSearchBox(data.get("PolicyNumber"))
+					.clickSearchButton();
+
+			test.appendChild(subTest);
+			report.endTest(subTest);
+			
+						
+			boolean navigateToPSP = shouldNavigateToPage(data, "PSP");
+			try {
+			if (navigateToPSP) {
+				subTest = report.startTest("Policy Summary section fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.getPolicySummarySectionPage()
+					.validateIssueDate(data.get("PSP#IssueDate"),includeBlankValue)
+					.validateIssueAge(data.get("PSP#IssueAge"),includeBlankValue)
+					.validateProductName(data.get("PSP#ProductName"),includeBlankValue)
+					.validateIssueState(data.get("PSP#IssueState"),includeBlankValue);				
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToDBP = shouldNavigateToPage(data, "DBP");
+			try {
+			if (navigateToDBP) {
+				subTest = report.startTest("Dashboard tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.getDashboardTab()
+				.validateRateClass(data.get("DBP#RateClass"),includeBlankValue)
+				.validatePaidToDate(data.get("DBP#PaidToDate"),includeBlankValue)
+				.validateDBFaceAmount(data.get("DBP#DB_FaceAmount"),includeBlankValue)
+				.validateDBGrossSurrenderValue(data.get("DBP#DB_GrossSurrenderValue"),includeBlankValue)
+				.validatePolicy_Status(data.get("DBP#PolicyStatus"),includeBlankValue)
+				.validateDBModalPremiumAmount(data.get("DBP#DB_ModalPremiumAmount"),includeBlankValue)
+				.validateMode(data.get("DBP#Mode"),includeBlankValue)
+				.validateDBBillingMethod(data.get("DBP#DB_BillingMethod"),includeBlankValue)
+				.validateDB_PlanOption(data.get("DBP#DB_PlanOption"),includeBlankValue)
+				.validateDB_RenewalDate(data.get("DBP#DB_RenewalDate"),includeBlankValue)
+				.getPolicyHomePage();
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+
+			/*
+			boolean navigateToComm = shouldNavigateToPage(data, "COMM");
+			try {
+			if (navigateToComm) {
+				subTest = report.startTest("Commissions tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCommissionsTab();
+				
+				if (!data.get("COMM#WritingAgentCode1").equals("")) {
+					commissionsPayableReportPage.test=subTest;
+					commissionsPayableReportPage
+					.validateACWritingAgentLevel(data.get("COMM#WritingAgentCode1"), data.get("COMM#WritingAgentLevel1"), includeBlankValue)
+					.validateACAgentShare(data.get("COMM#WritingAgentCode1"), data.get("COMM#AgentShare1"), includeBlankValue)
+					.validateACPremiumAmount(data.get("COMM#WritingAgentCode1"), data.get("COMM#PremiumAmount1"), includeBlankValue);
+				}
+				
+				if (!data.get("COMM#WritingAgentCode2").equals("")) {
+					commissionsPayableReportPage.test=subTest;
+					commissionsPayableReportPage
+					.validateACWritingAgentLevel(data.get("COMM#WritingAgentCode2"), data.get("COMM#WritingAgentLevel2"), includeBlankValue)
+					.validateACAgentShare(data.get("COMM#WritingAgentCode2"), data.get("COMM#AgentShare2"), includeBlankValue)
+					.validateACPremiumAmount(data.get("COMM#WritingAgentCode2"), data.get("COMM#PremiumAmount2"), includeBlankValue);
+				}
+				
+				if (!data.get("COMM#WritingAgentCode3").equals("")) {
+					commissionsPayableReportPage.test=subTest;
+					commissionsPayableReportPage
+					.validateACWritingAgentLevel(data.get("COMM#WritingAgentCode3"), data.get("COMM#WritingAgentLevel3"), includeBlankValue)
+					.validateACAgentShare(data.get("COMM#WritingAgentCode3"), data.get("COMM#AgentShare3"), includeBlankValue)
+					.validateACPremiumAmount(data.get("COMM#WritingAgentCode3"), data.get("COMM#PremiumAmount3"), includeBlankValue);
+				}
+
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			*/
+			
+			boolean navigateToExtAgnt = shouldNavigateToPage(data, "ExtAgnt");
+			try {
+			if (navigateToExtAgnt) {
+
+				
+				// Navigating to External Contract Update Pop-up for validations
+				
+				subTest = report.startTest("External Contract - Update Popup fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage
+					.clickWrenchIcon()
+					.selectExternalContractUpdateOption();
+					
+				if (!data.get("ExtAgnt#ExternalContractID1").equals("")) {
+					
+					externalContractUpdatePopupScreen.test = subTest;
+					if("Available".equalsIgnoreCase(externalContractUpdatePopupScreen.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID1")))){
+						externalContractUpdatePopupScreen.selectExternalContractID(data.get("ExtAgnt#ExternalContractID1"))
+						.validateAgentExternalRefNum(data.get("ExtAgnt#ExternalContractID1"), data.get("ExtAgnt#ExtRefNum1"), includeBlankValue)
+						.validateAgentName(data.get("ExtAgnt#ExternalContractID1"), data.get("ExtAgnt#AgentName1"), includeBlankValue)
+						.validateRoleID(data.get("ExtAgnt#ExternalContractID1"), data.get("ExtAgnt#RoleID1"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#ExternalContractID1"), data.get("ExtAgnt#Percentage1"), includeBlankValue)
+						.validateAgentFirstName(data.get("ExtAgnt#AgentFName1"), includeBlankValue)
+						.validateAgentMiddleName(data.get("ExtAgnt#ExtAgnt#AgentMName1"), includeBlankValue)
+						.validateAgentLastName(data.get("ExtAgnt#ExtAgnt#AgentLName1"), includeBlankValue)
+						.validateAgentBusinessPhone(data.get("ExtAgnt#BusinessPhone1"), includeBlankValue)
+						.validateAgentPreferredPhone(data.get("ExtAgnt#PreferredPhone1"), includeBlankValue)
+						.validateAgentResidentPhone(data.get("ExtAgnt#ResidentPhone1"), includeBlankValue)
+						.validateAgentBusinessEmail(data.get("ExtAgnt#BusinessEmail1"), includeBlankValue)
+						.validateAgentBusinessAddress(data.get("ExtAgnt#BusinessAddress1"), includeBlankValue)
+						.validateAgentContractIssueDate(data.get("ExtAgnt#ContractIssueDate1"), includeBlankValue)
+						.validateAgentGender(data.get("ExtAgnt#Gender1"), includeBlankValue)
+						.validateAgentBirthDate(data.get("ExtAgnt#BirthDate1"), includeBlankValue)
+						.validateAgentGOCode(data.get("ExtAgnt#GOCode1"), includeBlankValue)
+						.validateAgentGOName(data.get("ExtAgnt#GOName1"), includeBlankValue)
+						.validateAgentClassCd(data.get("ExtAgnt#ClassCd1"), includeBlankValue)
+						.validateAgentBlockedIndicator(data.get("ExtAgnt#BlockedIndicator1"), includeBlankValue)
+						.validateAgentContractCode(data.get("ExtAgnt#ContractCode1"), includeBlankValue)
+						.validateAgentMessage(data.get("ExtAgnt#Message1"), includeBlankValue);
+					}
+				}
+				
+				if (!data.get("ExtAgnt#ExternalContractID2").equals("")) {
+					externalContractUpdatePopupScreen.test = subTest;
+					if("Available".equalsIgnoreCase(externalContractUpdatePopupScreen.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID2")))){
+						externalContractUpdatePopupScreen.selectExternalContractID(data.get("ExtAgnt#ExternalContractID2"))
+						.validateAgentExternalRefNum(data.get("ExtAgnt#ExternalContractID2"), data.get("ExtAgnt#ExtRefNum2"), includeBlankValue)
+						.validateAgentName(data.get("ExtAgnt#ExternalContractID2"), data.get("ExtAgnt#AgentName2"), includeBlankValue)
+						.validateRoleID(data.get("ExtAgnt#ExternalContractID2"), data.get("ExtAgnt#RoleID2"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#ExternalContractID2"), data.get("ExtAgnt#Percentage2"), includeBlankValue)
+						.validateAgentFirstName(data.get("ExtAgnt#AgentFName2"), includeBlankValue)
+						.validateAgentMiddleName(data.get("ExtAgnt#ExtAgnt#AgentMName2"), includeBlankValue)
+						.validateAgentLastName(data.get("ExtAgnt#ExtAgnt#AgentLName2"), includeBlankValue)
+						.validateAgentBusinessPhone(data.get("ExtAgnt#BusinessPhone2"), includeBlankValue)
+						.validateAgentPreferredPhone(data.get("ExtAgnt#PreferredPhone2"), includeBlankValue)
+						.validateAgentResidentPhone(data.get("ExtAgnt#ResidentPhone2"), includeBlankValue)
+						.validateAgentBusinessEmail(data.get("ExtAgnt#BusinessEmail2"), includeBlankValue)
+						.validateAgentBusinessAddress(data.get("ExtAgnt#BusinessAddress2"), includeBlankValue)
+						.validateAgentContractIssueDate(data.get("ExtAgnt#ContractIssueDate2"), includeBlankValue)
+						.validateAgentGender(data.get("ExtAgnt#Gender2"), includeBlankValue)
+						.validateAgentBirthDate(data.get("ExtAgnt#BirthDate2"), includeBlankValue)
+						.validateAgentGOCode(data.get("ExtAgnt#GOCode2"), includeBlankValue)
+						.validateAgentGOName(data.get("ExtAgnt#GOName2"), includeBlankValue)
+						.validateAgentClassCd(data.get("ExtAgnt#ClassCd2"), includeBlankValue)
+						.validateAgentBlockedIndicator(data.get("ExtAgnt#BlockedIndicator2"), includeBlankValue)
+						.validateAgentContractCode(data.get("ExtAgnt#ContractCode2"), includeBlankValue)
+						.validateAgentMessage(data.get("ExtAgnt#Message2"), includeBlankValue);
+					}				
+				}
+				
+				if (!data.get("ExtAgnt#ExternalContractID3").equals("")) {
+					externalContractUpdatePopupScreen.test = subTest;
+					if("Available".equalsIgnoreCase(externalContractUpdatePopupScreen.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID3")))){
+						externalContractUpdatePopupScreen.selectExternalContractID(data.get("ExtAgnt#ExternalContractID3"))
+						.validateAgentExternalRefNum(data.get("ExtAgnt#ExternalContractID3"), data.get("ExtAgnt#ExtRefNum3"), includeBlankValue)
+						.validateAgentName(data.get("ExtAgnt#ExternalContractID3"), data.get("ExtAgnt#AgentName3"), includeBlankValue)
+						.validateRoleID(data.get("ExtAgnt#ExternalContractID3"), data.get("ExtAgnt#RoleID3"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#ExternalContractID3"), data.get("ExtAgnt#Percentage3"), includeBlankValue)
+						.validateAgentFirstName(data.get("ExtAgnt#AgentFName3"), includeBlankValue)
+						.validateAgentMiddleName(data.get("ExtAgnt#ExtAgnt#AgentMName3"), includeBlankValue)
+						.validateAgentLastName(data.get("ExtAgnt#ExtAgnt#AgentLName3"), includeBlankValue)
+						.validateAgentBusinessPhone(data.get("ExtAgnt#BusinessPhone3"), includeBlankValue)
+						.validateAgentPreferredPhone(data.get("ExtAgnt#PreferredPhone3"), includeBlankValue)
+						.validateAgentResidentPhone(data.get("ExtAgnt#ResidentPhone3"), includeBlankValue)
+						.validateAgentBusinessEmail(data.get("ExtAgnt#BusinessEmail3"), includeBlankValue)
+						.validateAgentBusinessAddress(data.get("ExtAgnt#BusinessAddress3"), includeBlankValue)
+						.validateAgentContractIssueDate(data.get("ExtAgnt#ContractIssueDate3"), includeBlankValue)
+						.validateAgentGender(data.get("ExtAgnt#Gender3"), includeBlankValue)
+						.validateAgentBirthDate(data.get("ExtAgnt#BirthDate3"), includeBlankValue)
+						.validateAgentGOCode(data.get("ExtAgnt#GOCode3"), includeBlankValue)
+						.validateAgentGOName(data.get("ExtAgnt#GOName3"), includeBlankValue)
+						.validateAgentClassCd(data.get("ExtAgnt#ClassCd3"), includeBlankValue)
+						.validateAgentBlockedIndicator(data.get("ExtAgnt#BlockedIndicator3"), includeBlankValue)
+						.validateAgentContractCode(data.get("ExtAgnt#ContractCode3"), includeBlankValue)
+						.validateAgentMessage(data.get("ExtAgnt#Message3"), includeBlankValue);
+					}
+				}
+				externalContractUpdatePopupScreen.selectCancel();
+				test.appendChild(subTest);
+				report.endTest(subTest);
+				
+				// Navigating to External Agent tab for validations
+				
+				subTest = report.startTest("External Agent tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToExternalAgentTab();
+				
+				if (!data.get("ExtAgnt#ExternalContractID1").equals("")) {
+					
+					externalAgentPage.test = subTest;
+					if("Available".equalsIgnoreCase(externalAgentPage.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID1")))){
+						externalAgentPage.navigateToAgentSummary(data.get("ExtAgnt#ExternalContractID1"))
+						.validateAgentName(data.get("ExtAgnt#AgentName1"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#Percentage1"), includeBlankValue)
+						.validateECType(data.get("ExtAgnt#ECType1"), includeBlankValue);
+					}
+				}
+				
+				if (!data.get("ExtAgnt#ExternalContractID2").equals("")) {
+					externalAgentPage.test = subTest;
+					if("Available".equalsIgnoreCase(externalAgentPage.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID2")))){
+						externalAgentPage.navigateToAgentSummary(data.get("ExtAgnt#ExternalContractID2"))
+						.validateAgentName(data.get("ExtAgnt#AgentName2"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#Percentage2"), includeBlankValue)
+						.validateECType(data.get("ExtAgnt#ECType2"), includeBlankValue);
+					}				
+				}
+				
+				if (!data.get("ExtAgnt#ExternalContractID3").equals("")) {
+					externalAgentPage.test = subTest;
+					if("Available".equalsIgnoreCase(externalAgentPage.validateExtContractIDExists(data.get("ExtAgnt#ExternalContractID3")))){
+						externalAgentPage.navigateToAgentSummary(data.get("ExtAgnt#ExternalContractID3"))
+						.validateAgentName(data.get("ExtAgnt#AgentName3"), includeBlankValue)
+						.validatePercentage(data.get("ExtAgnt#Percentage3"), includeBlankValue)
+						.validateECType(data.get("ExtAgnt#ECType3"), includeBlankValue);
+					}
+				}
+				
+				test.appendChild(subTest);
+				report.endTest(subTest);	
+				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToPVP = shouldNavigateToPage(data, "PVP");
+			try {
+			if (navigateToPVP) {
+				subTest = report.startTest("Policy Values tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.gotoPolicyValuesTab()
+						.validatePaidTo(data.get("PVP#PaidTo"),includeBlankValue)
+						.validatePremiumCeaseDate(data.get("PVP#PremiumCeaseDate"),includeBlankValue)
+						.validateBillingMode(data.get("PVP#BillingMode"),includeBlankValue)
+						.validateBillingMethod(data.get("PVP#BillingMethod"),includeBlankValue)
+						.validateModalPremiumAmount(data.get("PVP#ModalPremiumAmount"),includeBlankValue)
+						.validateBillPremiumAmount(data.get("PVP#BillPremiumAmount"),includeBlankValue)
+						.validateStatus(data.get("PVP#Status"),includeBlankValue)
+						.validateOriginalPolicyNumber(data.get("PVP#OriginalPolicyNumber"),includeBlankValue)
+						.validateFreeLookEndDate(data.get("PVP#FreeLookEndDate"),includeBlankValue)
+						.validateTerminationDate(data.get("PVP#TerminationDate"),includeBlankValue)
+						.validateMaturityExpiryDate(data.get("PVP#MaturityExpiryDate"),includeBlankValue)
+						.validateTotalLoanBalance(data.get("PVP#TotalLoanBalance"),includeBlankValue)
+						.validateTotalLoanPrincipal(data.get("PVP#TotalLoanPrincipal"),includeBlankValue)
+						.validateMaxLoanAmount(data.get("PVP#MaxLoanAmount"),includeBlankValue)
+						.validateLoanAccruedInterest(data.get("PVP#LoanAccruedInterest"),includeBlankValue)
+						.validateLoanInterestRate(data.get("PVP#LoanInterestRate"),includeBlankValue)
+						.validateGrossSurrenderValue(data.get("PVP#GrossSurrenderValue"),includeBlankValue)
+						.validateNetSurrenderValue(data.get("PVP#NetSurrenderValue"),includeBlankValue)
+						.validateGain(data.get("PVP#Gain"),includeBlankValue)
+						.validateCostBasis(data.get("PVP#CostBasis"),includeBlankValue)
+						.validateTotalDeathBenefit(data.get("PVP#TotalDeathBenefit"),includeBlankValue)
+						.validateFaceAmount(data.get("PVP#FaceAmount"),includeBlankValue)
+						.validateNetDeathBenefit(data.get("PVP#NetDeathBenefit"),includeBlankValue)
+						.validatePUARfaceAmount(data.get("PVP#PUARfaceAmount"),includeBlankValue)
+						.validatePUARcashValue(data.get("PVP#PUARcashValue"),includeBlankValue)
+						.validateTotalAmountProcessed(data.get("PVP#TotalAmountProcessed"),includeBlankValue)
+						.validateTotalFundBalance(data.get("PVP#TotalFundBalance"),includeBlankValue)
+						.getPolicyHomePage();
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToPPV = shouldNavigateToPage(data, "PPV");
+			try {
+			if (navigateToPPV) {
+				subTest = report.startTest("Policy Premium Values tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.gotoPolicyPremiumValuesTab()
+				.openPremiumRecordAtEndDate()
+				//.openPremiumRecordAtIssueDate()
+						.validateStartDate(data.get("PPV#StartDate"),includeBlankValue)					
+						.validateEndDate(data.get("PPV#EndDate"),includeBlankValue)
+						.validateTrxHdrID(data.get("PPV#TrxHdrID"),includeBlankValue)
+						.validateTamra7PayPrem(data.get("PPV#Tamra7PayPrem"),includeBlankValue)
+						.validateTamra7PayAcctValue(data.get("PPV#Tamra7PayAcctValue"),includeBlankValue)
+						.validateTamraTestStartDate(data.get("PPV#TamraTestStartDate"),includeBlankValue)
+						.validateGuidelineLevelPrem(data.get("PPV#GuidelineLevelPrem"),includeBlankValue)
+						.validateGuidelineSinglePrem(data.get("PPV#GuidelineSinglePrem"),includeBlankValue)
+						.validateMinPrem(data.get("PPV#MinPrem"),includeBlankValue)
+						.validateTamra7PayNSP(data.get("PPV#Tamra7PayNSP"),includeBlankValue)
+						.validateTamraUnAdj7PayPrem(data.get("PPV#TamraUnAdj7PayPrem"),includeBlankValue)
+						.validatePremium(data.get("PPV#Premium"),includeBlankValue)
+						.validateTargetPrem(data.get("PPV#TargetPrem"),includeBlankValue)
+						.validateCommTarget(data.get("PPV#CommTarget"),includeBlankValue)
+						.validateModalPrem(data.get("PPV#ModalPrem"),includeBlankValue)
+						.validatePaymentMode(data.get("PPV#PaymentMode"),includeBlankValue)
+						.validateAnnualPrem(data.get("PPV#AnnualPrem"),includeBlankValue)
+						.validateBillingType(data.get("PPV#BillingType"),includeBlankValue)
+						.validateSpecialRiskPrem(data.get("PPV#SpecialRiskPrem"),includeBlankValue)
+						.validateNewPaymentMode(data.get("PPV#NewPaymentMode"),includeBlankValue)
+						.validateNewBillingType(data.get("PPV#NewBillingType"),includeBlankValue)
+						.validateTAMRA7PayAnnFactor(data.get("PPV#TAMRA7PayAnnFactor"),includeBlankValue)
+						.validateTamraRider7Pay(data.get("PPV#TamraRider7Pay"),includeBlankValue)
+						.validateTamraFaceAmount(data.get("PPV#TamraFaceAmount"),includeBlankValue)
+						.validateModalPremOld(data.get("PPV#ModalPremOld"),includeBlankValue)
+						.validatePremChangeDate(data.get("PPV#PremChangeDate"),includeBlankValue)
+						.validateNLGRiderindicator(data.get("PPV#NLGRiderindicator"),includeBlankValue)
+						.validateNLGPrem(data.get("PPV#NLGPrem"),includeBlankValue)
+						.validateMinToIssuePrem(data.get("PPV#MinToIssuePrem"),includeBlankValue)
+						.validateModalNLGPrem(data.get("PPV#ModalNLGPrem"),includeBlankValue)
+						.validateCommAdjTarget(data.get("PPV#CommAdjTarget"),includeBlankValue)
+						.validateModalMinPrem(data.get("PPV#ModalMinPrem"),includeBlankValue)
+						.validatePUARAnnualPrem(data.get("PPV#PUARAnnualPrem"),includeBlankValue)
+						.validatePUARModalPrem(data.get("PPV#PUARModalPrem"),includeBlankValue)
+						.validateBaseModalPrem(data.get("PPV#BaseModalPrem"),includeBlankValue)
+						.validateBaseAnnualPrem(data.get("PPV#BaseAnnualPrem"),includeBlankValue)
+						.validateTotalAnnualPrem(data.get("PPV#TotalAnnualPrem"),includeBlankValue)
+						.validateSemiAnnualPrem(data.get("PPV#SemiAnnualPrem"),includeBlankValue)
+						.validateQuarterlyPrem(data.get("PPV#QuarterlyPrem"),includeBlankValue)
+						.validateMonthlyPrem(data.get("PPV#MonthlyPrem"),includeBlankValue)
+						.validateAnnualizedPrem(data.get("PPV#AnnualizedPrem"),includeBlankValue)
+						.validateInitialPaidToDate(data.get("PPV#InitialPaidToDate"),includeBlankValue)
+						.validateTotalPmtAmt(data.get("PPV#TotalPmtAmt"),includeBlankValue)
+						.validateDeemedCashValue(data.get("PPV#DeemedCashValue"),includeBlankValue)
+						.validateESVPrem(data.get("PPV#ESVPrem"),includeBlankValue)
+						.validateAnnualStdBasePrem(data.get("PPV#AnnualStdBasePrem"),includeBlankValue)
+						.getPolicyHomePage();
+				test.appendChild(subTest);
+				report.endTest(subTest);			
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToRoles = shouldNavigateToPage(data, "RolesInsBaseCov");
+			try {
+			if (navigateToRoles) {
+				subTest = report.startTest("Roles tab fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage
+				.goToRolesTab()
+				.navigateToInsBaseCovSummary()
+				.validateAge(data.get("RolesInsBaseCov#Age"), includeBlankValue)
+				.validateGender(data.get("RolesInsBaseCov#Gender"), includeBlankValue);				
+						
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToBaseCov = shouldNavigateToPage(data, "BaseCov");
+			try {
+			if (navigateToBaseCov) {
+				
+				subTest = report.startTest("Base Coverages Summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.validatePlanCode(data.get("BaseCov#PlanCode"),includeBlankValue)
+						.validateStatus(data.get("BaseCov#CS_Status"),includeBlankValue)
+						.validateGender(data.get("BaseCov#Gender"),includeBlankValue)
+						.validateDOB(data.get("BaseCov#DOB"),includeBlankValue)
+						.validateIssueAge(data.get("BaseCov#IssueAge"),includeBlankValue)
+						.validateRLIssueDate(data.get("BaseCov#IssueDate"),includeBlankValue)
+						.validateMatureExpiryDate(data.get("BaseCov#MatureExpiryDate"),includeBlankValue)
+						.validateCS_RateClass(data.get("BaseCov#CS_RateClass"),includeBlankValue)
+						.validateSmokerStatus(data.get("BaseCov#SmokerStatus"),includeBlankValue)
+						.validateBand(data.get("BaseCov#Band"),includeBlankValue)
+						.validateCS_StartDate(data.get("BaseCov#CS_StartDate"),includeBlankValue)
+						.validateCS_EndDate(data.get("BaseCov#CS_EndDate"),includeBlankValue)
+						.validateCS_TerminationDate(data.get("BaseCov#CS_TerminationDate"),includeBlankValue)
+						.validateFormNum(data.get("BaseCov#FormNum"),includeBlankValue)
+						.validateLOB(data.get("BaseCov#LOB"),includeBlankValue)
+						.validatePolicyCovTL_Permanent(data.get("BaseCov#PolicyCovTL_Permanent"),includeBlankValue)
+						.validatePolicyCovTL_DivOption(data.get("BaseCov#PolicyCovTL_DivOption"),includeBlankValue)
+						.validatePolicyCovTL_Premium(data.get("BaseCov#PolicyCovTL_Premium"),includeBlankValue)
+						.validatePolicyCovTL_NFOOption(data.get("BaseCov#PolicyCovTL_NFOOption"),includeBlankValue)
+						.validatePolicyCovTL_ParType(data.get("BaseCov#PolicyCovTL_ParType"),includeBlankValue)
+						.validatePolicyCovTL_PureEndowmentAmt(data.get("BaseCov#PolicyCovTL_PureEndowmentAmt"),includeBlankValue)
+						.validatePolicyCovTL_PaymentPeriod(data.get("BaseCov#PolicyCovTL_PaymentPeriod"),includeBlankValue)
+						.validatePolicyCovTL_DeathBenOptID(data.get("BaseCov#PolicyCovTL_DeathBenOptID"),includeBlankValue)
+						.validateCovOption(data.get("BaseCov#CovOption"),includeBlankValue)
+						.validateSubstandardCode(data.get("BaseCov#SubstandardCode"),includeBlankValue)
+						.validateProcessRestrict(data.get("BaseCov#ProcessRestrict"),includeBlankValue)
+						.validateCS_FaceAmount(data.get("BaseCov#CS_FaceAmount"),includeBlankValue)
+						.validatePayorAge(data.get("BaseCov#PayorAge"),includeBlankValue)
+						.validatePayorGender(data.get("BaseCov#PayorGender"),includeBlankValue)
+						.validateQuoteClaimAmt(data.get("BaseCov#QuoteClaimAmt"),includeBlankValue)
+						.validateClaimAmt(data.get("BaseCov#ClaimAmt"),includeBlankValue)
+						.validateShortName(data.get("BaseCov#ShortName"),includeBlankValue)
+						.validatePlanDescription(data.get("BaseCov#PlanDescription"),includeBlankValue)
+						.validateCovDesc(data.get("BaseCov#CovDesc"),includeBlankValue)
+						.validateINSDOB(data.get("BaseCov#INSDOB"),includeBlankValue)
+						.validateINSGender(data.get("BaseCov#INSGender"),includeBlankValue)
+						.validateINSIssueAge(data.get("BaseCov#INSIssueAge"),includeBlankValue)
+						.validateDigitalPlanCode(data.get("BaseCov#DigitalPlanCode"),includeBlankValue)
+						.validateBinaryPlanCode(data.get("BaseCov#BinaryPlanCode"),includeBlankValue)
+						.validateProductCodeCRT(data.get("BaseCov#ProductCodeCRT"),includeBlankValue)
+						.validateMnemonicPlanCode(data.get("BaseCov#MnemonicPlanCode"),includeBlankValue)
+						.validateEffectiveDate(data.get("BaseCov#EffectiveDate"),includeBlankValue)
+						.validateIsBaseCoverage(data.get("BaseCov#IsBaseCoverage"),includeBlankValue)
+						.validatePolicyCovTL_JointInsPermFlatExtraPrem(data.get("BaseCov#PolicyCovTL_JointInsPermFlatExtraPrem"),includeBlankValue)
+						.validateJointInsDOB(data.get("BaseCov#JointInsDOB"),includeBlankValue)
+						.validateJointInsIssueAge(data.get("BaseCov#JointInsIssueAge"),includeBlankValue)
+						.validateJointInsGender(data.get("BaseCov#JointInsGender"),includeBlankValue)
+						.validateJointInsSpouseInd(data.get("BaseCov#JointInsSpouseInd"),includeBlankValue)
+						.validateJointInsRateClass(data.get("BaseCov#JointInsRateClass"),includeBlankValue)
+						.validateJointInsSmokerStatus(data.get("BaseCov#JointInsSmokerStatus"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraAmt(data.get("BaseCov#PolicyCovTL_FlatExtraAmt"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraYear(data.get("BaseCov#PolicyCovTL_FlatExtraYear"),includeBlankValue)
+						.validatePolicyCovTL_PermFlatExtraAmt(data.get("BaseCov#PolicyCovTL_PermFlatExtraAmt"),includeBlankValue);
+						
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			//Removed the fields from the test data sheet as the Riders are not in scope for Term now.
+			//Field names if required on the test data sheet in future.
+			//YRT5#PlanCode	YRT5#CS_Status	YRT5#Gender	YRT5#DOB	YRT5#IssueAge	YRT5#IssueDate	YRT5#MatureExpiryDate	YRT5#CS_RateClass	YRT5#SmokerStatus	YRT5#Band	YRT5#CS_StartDate	YRT5#CS_EndDate	YRT5#CS_TerminationDate	YRT5#FormNum	YRT5#LOB	YRT5#PolicyCovTL_Permanent	YRT5#PolicyCovTL_DivOption	YRT5#PolicyCovTL_Premium	YRT5#PolicyCovTL_NFOOption	YRT5#PolicyCovTL_ParType	YRT5#PolicyCovTL_PureEndowmentAmt	YRT5#PolicyCovTL_PaymentPeriod	YRT5#PolicyCovTL_DeathBenOptID	YRT5#CovOption	YRT5#SubstandardCode	YRT5#ProcessRestrict	YRT5#CS_FaceAmount	YRT5#PayorAge	YRT5#PayorGender	YRT5#QuoteClaimAmt	YRT5#ClaimAmt	YRT5#ShortName	YRT5#PlanDescription	YRT5#CovDesc	YRT5#INSDOB	YRT5#INSGender	YRT5#INSIssueAge	YRT5#DigitalPlanCode	YRT5#BinaryPlanCode	YRT5#ProductCodeCRT	YRT5#MnemonicPlanCode	YRT5#EffectiveDate	YRT5#IsBaseCoverage	YRT5#PolicyCovTL_JointInsPermFlatExtraPrem	YRT5#JointInsDOB	YRT5#JointInsIssueAge	YRT5#JointInsGender	YRT5#JointInsSpouseInd	YRT5#JointInsRateClass	YRT5#JointInsSmokerStatus	YRT5#PolicyCovTL_FlatExtraAmt	YRT5#PolicyCovTL_FlatExtraYear	YRT5#PolicyCovTL_PermFlatExtraAmt
+
+			boolean navigateToYRT5 = shouldNavigateToPage(data, "YRT5");
+			try {
+			if (navigateToYRT5) {
+				
+				subTest = report.startTest("YRT5 Coverages summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("5-Year Level Term Rider")
+						.validatePlanCode(data.get("YRT5#PlanCode"),includeBlankValue)
+						.validateStatus(data.get("YRT5#CS_Status"),includeBlankValue)
+						.validateGender(data.get("YRT5#Gender"),includeBlankValue)
+						.validateDOB(data.get("YRT5#DOB"),includeBlankValue)
+						.validateIssueAge(data.get("YRT5#IssueAge"),includeBlankValue)
+						.validateRLIssueDate(data.get("YRT5#IssueDate"),includeBlankValue)
+						.validateMatureExpiryDate(data.get("YRT5#MatureExpiryDate"),includeBlankValue)
+						.validateCS_RateClass(data.get("YRT5#CS_RateClass"),includeBlankValue)
+						.validateSmokerStatus(data.get("YRT5#SmokerStatus"),includeBlankValue)
+						.validateBand(data.get("YRT5#Band"),includeBlankValue)
+						.validateCS_StartDate(data.get("YRT5#CS_StartDate"),includeBlankValue)
+						.validateCS_EndDate(data.get("YRT5#CS_EndDate"),includeBlankValue)
+						.validateCS_TerminationDate(data.get("YRT5#CS_TerminationDate"),includeBlankValue)
+						.validateFormNum(data.get("YRT5#FormNum"),includeBlankValue)
+						.validateLOB(data.get("YRT5#LOB"),includeBlankValue)
+						.validatePolicyCovTL_Permanent(data.get("YRT5#PolicyCovTL_Permanent"),includeBlankValue)
+						.validatePolicyCovTL_DivOption(data.get("YRT5#PolicyCovTL_DivOption"),includeBlankValue)
+						.validatePolicyCovTL_Premium(data.get("YRT5#PolicyCovTL_Premium"),includeBlankValue)
+						.validatePolicyCovTL_NFOOption(data.get("YRT5#PolicyCovTL_NFOOption"),includeBlankValue)
+						.validatePolicyCovTL_ParType(data.get("YRT5#PolicyCovTL_ParType"),includeBlankValue)
+						.validatePolicyCovTL_PureEndowmentAmt(data.get("YRT5#PolicyCovTL_PureEndowmentAmt"),includeBlankValue)
+						.validatePolicyCovTL_PaymentPeriod(data.get("YRT5#PolicyCovTL_PaymentPeriod"),includeBlankValue)
+						.validatePolicyCovTL_DeathBenOptID(data.get("YRT5#PolicyCovTL_DeathBenOptID"),includeBlankValue)
+						.validateCovOption(data.get("YRT5#CovOption"),includeBlankValue)
+						.validateSubstandardCode(data.get("YRT5#SubstandardCode"),includeBlankValue)
+						.validateProcessRestrict(data.get("YRT5#ProcessRestrict"),includeBlankValue)
+						.validateCS_FaceAmount(data.get("YRT5#CS_FaceAmount"),includeBlankValue)
+						.validatePayorAge(data.get("YRT5#PayorAge"),includeBlankValue)
+						.validatePayorGender(data.get("YRT5#PayorGender"),includeBlankValue)
+						.validateQuoteClaimAmt(data.get("YRT5#QuoteClaimAmt"),includeBlankValue)
+						.validateClaimAmt(data.get("YRT5#ClaimAmt"),includeBlankValue)
+						.validateShortName(data.get("YRT5#ShortName"),includeBlankValue)
+						.validatePlanDescription(data.get("YRT5#PlanDescription"),includeBlankValue)
+						.validateCovDesc(data.get("YRT5#CovDesc"),includeBlankValue)
+						.validateINSDOB(data.get("YRT5#INSDOB"),includeBlankValue)
+						.validateINSGender(data.get("YRT5#INSGender"),includeBlankValue)
+						.validateINSIssueAge(data.get("YRT5#INSIssueAge"),includeBlankValue)
+						.validateDigitalPlanCode(data.get("YRT5#DigitalPlanCode"),includeBlankValue)
+						.validateBinaryPlanCode(data.get("YRT5#BinaryPlanCode"),includeBlankValue)
+						.validateProductCodeCRT(data.get("YRT5#ProductCodeCRT"),includeBlankValue)
+						.validateMnemonicPlanCode(data.get("YRT5#MnemonicPlanCode"),includeBlankValue)			
+						.validateEffectiveDate(data.get("YRT5#EffectiveDate"),includeBlankValue)
+						.validateIsBaseCoverage(data.get("YRT5#IsBaseCoverage"),includeBlankValue)
+						.validatePolicyCovTL_JointInsPermFlatExtraPrem(data.get("YRT5#PolicyCovTL_JointInsPermFlatExtraPrem"),includeBlankValue)
+						.validateJointInsDOB(data.get("YRT5#JointInsDOB"),includeBlankValue)
+						.validateJointInsIssueAge(data.get("YRT5#JointInsIssueAge"),includeBlankValue)
+						.validateJointInsGender(data.get("YRT5#JointInsGender"),includeBlankValue)
+						.validateJointInsSpouseInd(data.get("YRT5#JointInsSpouseInd"),includeBlankValue)
+						.validateJointInsRateClass(data.get("YRT5#JointInsRateClass"),includeBlankValue)
+						.validateJointInsSmokerStatus(data.get("YRT5#JointInsSmokerStatus"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraAmt(data.get("YRT5#PolicyCovTL_FlatExtraAmt"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraYear(data.get("YRT5#PolicyCovTL_FlatExtraYear"),includeBlankValue)
+						.validatePolicyCovTL_PermFlatExtraAmt(data.get("YRT5#PolicyCovTL_PermFlatExtraAmt"),includeBlankValue);
+						
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			//Removed the fields from the test data sheet as the Riders are not in scope for Term now.
+			//Field names if required on the test data sheet in future.
+			//YRT#PlanCode	YRT#CS_Status	YRT#Gender	YRT#DOB	YRT#IssueAge	YRT#IssueDate	YRT#MatureExpiryDate	YRT#CS_RateClass	YRT#SmokerStatus	YRT#Band	YRT#CS_StartDate	YRT#CS_EndDate	YRT#CS_TerminationDate	YRT#FormNum	YRT#LOB	YRT#PolicyCovTL_Permanent	YRT#PolicyCovTL_DivOption	YRT#PolicyCovTL_Premium	YRT#PolicyCovTL_NFOOption	YRT#PolicyCovTL_ParType	YRT#PolicyCovTL_PureEndowmentAmt	YRT#PolicyCovTL_PaymentPeriod	YRT#PolicyCovTL_DeathBenOptID	YRT#CovOption	YRT#SubstandardCode	YRT#ProcessRestrict	YRT#CS_FaceAmount	YRT#PayorAge	YRT#PayorGender	YRT#QuoteClaimAmt	YRT#ClaimAmt	YRT#ShortName	YRT#PlanDescription	YRT#CovDesc	YRT#INSDOB	YRT#INSGender	YRT#INSIssueAge	YRT#DigitalPlanCode	YRT#BinaryPlanCode	YRT#ProductCodeCRT	YRT#MnemonicPlanCode	YRT#EffectiveDate	YRT#IsBaseCoverage	YRT#PolicyCovTL_JointInsPermFlatExtraPrem	YRT#JointInsDOB	YRT#JointInsIssueAge	YRT#JointInsGender	YRT#JointInsSpouseInd	YRT#JointInsRateClass	YRT#JointInsSmokerStatus	YRT#PolicyCovTL_FlatExtraAmt	YRT#PolicyCovTL_FlatExtraYear	YRT#PolicyCovTL_PermFlatExtraAmt
+
+			boolean navigateToYRT = shouldNavigateToPage(data, "YRT");
+			try {
+			if (navigateToYRT) {
+				
+				subTest = report.startTest("YRT Coverages summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Yearly Renewable Term")
+						.validatePlanCode(data.get("YRT#PlanCode"),includeBlankValue)
+						.validateStatus(data.get("YRT#CS_Status"),includeBlankValue)
+						.validateGender(data.get("YRT#Gender"),includeBlankValue)
+						.validateDOB(data.get("YRT#DOB"),includeBlankValue)
+						.validateIssueAge(data.get("YRT#IssueAge"),includeBlankValue)
+						.validateRLIssueDate(data.get("YRT#IssueDate"),includeBlankValue)
+						.validateMatureExpiryDate(data.get("YRT#MatureExpiryDate"),includeBlankValue)
+						.validateCS_RateClass(data.get("YRT#CS_RateClass"),includeBlankValue)
+						.validateSmokerStatus(data.get("YRT#SmokerStatus"),includeBlankValue)
+						.validateBand(data.get("YRT#Band"),includeBlankValue)
+						.validateCS_StartDate(data.get("YRT#CS_StartDate"),includeBlankValue)
+						.validateCS_EndDate(data.get("YRT#CS_EndDate"),includeBlankValue)
+						.validateCS_TerminationDate(data.get("YRT#CS_TerminationDate"),includeBlankValue)
+						.validateFormNum(data.get("YRT#FormNum"),includeBlankValue)
+						.validateLOB(data.get("YRT#LOB"),includeBlankValue)
+						.validatePolicyCovTL_Permanent(data.get("YRT#PolicyCovTL_Permanent"),includeBlankValue)
+						.validatePolicyCovTL_DivOption(data.get("YRT#PolicyCovTL_DivOption"),includeBlankValue)
+						.validatePolicyCovTL_Premium(data.get("YRT#PolicyCovTL_Premium"),includeBlankValue)
+						.validatePolicyCovTL_NFOOption(data.get("YRT#PolicyCovTL_NFOOption"),includeBlankValue)
+						.validatePolicyCovTL_ParType(data.get("YRT#PolicyCovTL_ParType"),includeBlankValue)
+						.validatePolicyCovTL_PureEndowmentAmt(data.get("YRT#PolicyCovTL_PureEndowmentAmt"),includeBlankValue)
+						.validatePolicyCovTL_PaymentPeriod(data.get("YRT#PolicyCovTL_PaymentPeriod"),includeBlankValue)
+						.validatePolicyCovTL_DeathBenOptID(data.get("YRT#PolicyCovTL_DeathBenOptID"),includeBlankValue)
+						.validateCovOption(data.get("YRT#CovOption"),includeBlankValue)
+						.validateSubstandardCode(data.get("YRT#SubstandardCode"),includeBlankValue)
+						.validateProcessRestrict(data.get("YRT#ProcessRestrict"),includeBlankValue)
+						.validateCS_FaceAmount(data.get("YRT#CS_FaceAmount"),includeBlankValue)
+						.validatePayorAge(data.get("YRT#PayorAge"),includeBlankValue)
+						.validatePayorGender(data.get("YRT#PayorGender"),includeBlankValue)
+						.validateQuoteClaimAmt(data.get("YRT#QuoteClaimAmt"),includeBlankValue)
+						.validateClaimAmt(data.get("YRT#ClaimAmt"),includeBlankValue)
+						.validateShortName(data.get("YRT#ShortName"),includeBlankValue)
+						.validatePlanDescription(data.get("YRT#PlanDescription"),includeBlankValue)
+						.validateCovDesc(data.get("YRT#CovDesc"),includeBlankValue)
+						.validateINSDOB(data.get("YRT#INSDOB"),includeBlankValue)
+						.validateINSGender(data.get("YRT#INSGender"),includeBlankValue)
+						.validateINSIssueAge(data.get("YRT#INSIssueAge"),includeBlankValue)
+						.validateDigitalPlanCode(data.get("YRT#DigitalPlanCode"),includeBlankValue)
+						.validateBinaryPlanCode(data.get("YRT#BinaryPlanCode"),includeBlankValue)
+						.validateProductCodeCRT(data.get("YRT#ProductCodeCRT"),includeBlankValue)
+						.validateMnemonicPlanCode(data.get("YRT#MnemonicPlanCode"),includeBlankValue)
+						.validateEffectiveDate(data.get("YRT#EffectiveDate"),includeBlankValue)
+						.validateIsBaseCoverage(data.get("YRT#IsBaseCoverage"),includeBlankValue)
+						.validatePolicyCovTL_JointInsPermFlatExtraPrem(data.get("YRT#PolicyCovTL_JointInsPermFlatExtraPrem"),includeBlankValue)
+						.validateJointInsDOB(data.get("YRT#JointInsDOB"),includeBlankValue)
+						.validateJointInsIssueAge(data.get("YRT#JointInsIssueAge"),includeBlankValue)
+						.validateJointInsGender(data.get("YRT#JointInsGender"),includeBlankValue)
+						.validateJointInsSpouseInd(data.get("YRT#JointInsSpouseInd"),includeBlankValue)
+						.validateJointInsRateClass(data.get("YRT#JointInsRateClass"),includeBlankValue)
+						.validateJointInsSmokerStatus(data.get("YRT#JointInsSmokerStatus"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraAmt(data.get("YRT#PolicyCovTL_FlatExtraAmt"),includeBlankValue)
+						.validatePolicyCovTL_FlatExtraYear(data.get("YRT#PolicyCovTL_FlatExtraYear"),includeBlankValue)
+						.validatePolicyCovTL_PermFlatExtraAmt(data.get("YRT#PolicyCovTL_PermFlatExtraAmt"),includeBlankValue);
+						
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToADB = shouldNavigateToPage(data, "ADB");
+			try {
+			if (navigateToADB) {
+				subTest = report.startTest("Accidental Death Benefit summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Accidental Death Benefit Rider")
+						.validateBD_BenefitType(data.get("ADB#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("ADB#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("ADB#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("ADB#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("ADB#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("ADB#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("ADB#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("ADB#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("ADB#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("ADB#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("ADB#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("ADB#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("ADB#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("ADB#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("ADB#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("ADB#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("ADB#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("ADB#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("ADB#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("ADB#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("ADB#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("ADB#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("ADB#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("ADB#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("ADB#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("ADB#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("ADB#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("ADB#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("ADB#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("ADB#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("ADB#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("ADB#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("ADB#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("ADB#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("ADB#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("ADB#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("ADB#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("ADB#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("ADB#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("ADB#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("ADB#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("ADB#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("ADB#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("ADB#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("ADB#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("ADB#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("ADB#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("ADB#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("ADB#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("ADB#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("ADB#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("ADB#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("ADB#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("ADB#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("ADB#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("ADB#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("ADB#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("ADB#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("ADB#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("ADB#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("ADB#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("ADB#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("ADB#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("ADB#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("ADB#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("ADB#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("ADB#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("ADB#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("ADB#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("ADB#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("ADB#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("ADB#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("ADB#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("ADB#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("ADB#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("ADB#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("ADB#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("ADB#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("ADB#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("ADB#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("ADB#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("ADB#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("ADB#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("ADB#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				handleException(e, subTest, test, driver);
+				//subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				//subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToWOP = shouldNavigateToPage(data, "WOP");
+			try {
+			if (navigateToWOP) {
+				subTest = report.startTest("Waiver of Premium summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Waiver of Premium Rider")
+						.validateBD_BenefitType(data.get("WOP#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("WOP#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("WOP#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("WOP#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("WOP#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("WOP#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("WOP#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("WOP#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("WOP#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("WOP#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("WOP#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("WOP#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("WOP#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("WOP#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("WOP#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("WOP#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("WOP#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("WOP#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("WOP#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("WOP#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("WOP#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("WOP#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("WOP#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("WOP#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("WOP#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("WOP#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("WOP#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("WOP#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("WOP#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("WOP#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("WOP#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("WOP#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("WOP#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("WOP#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("WOP#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("WOP#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("WOP#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("WOP#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("WOP#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("WOP#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("WOP#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("WOP#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("WOP#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("WOP#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("WOP#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("WOP#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("WOP#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("WOP#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("WOP#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("WOP#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("WOP#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("WOP#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("WOP#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("WOP#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("WOP#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("WOP#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("WOP#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("WOP#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("WOP#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("WOP#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("WOP#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("WOP#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("WOP#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("WOP#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("WOP#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("WOP#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("WOP#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("WOP#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("WOP#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("WOP#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("WOP#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("WOP#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("WOP#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("WOP#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("WOP#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("WOP#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("WOP#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("WOP#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("WOP#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("WOP#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("WOP#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("WOP#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("WOP#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("WOP#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToECPO = shouldNavigateToPage(data, "ECPO");
+			try {
+			if (navigateToECPO) {
+				subTest = report.startTest("Extension of Conversion Privilege Option summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Extension of Conversion Privilege Option")	
+						.validateBD_BenefitType(data.get("ECPO#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("ECPO#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("ECPO#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("ECPO#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("ECPO#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("ECPO#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("ECPO#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("ECPO#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("ECPO#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("ECPO#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("ECPO#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("ECPO#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("ECPO#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("ECPO#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("ECPO#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("ECPO#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("ECPO#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("ECPO#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("ECPO#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("ECPO#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("ECPO#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("ECPO#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("ECPO#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("ECPO#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("ECPO#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("ECPO#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("ECPO#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("ECPO#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("ECPO#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("ECPO#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("ECPO#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("ECPO#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("ECPO#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("ECPO#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("ECPO#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("ECPO#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("ECPO#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("ECPO#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("ECPO#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("ECPO#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("ECPO#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("ECPO#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("ECPO#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("ECPO#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("ECPO#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("ECPO#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("ECPO#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("ECPO#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("ECPO#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("ECPO#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("ECPO#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("ECPO#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("ECPO#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("ECPO#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("ECPO#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("ECPO#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("ECPO#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("ECPO#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("ECPO#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("ECPO#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("ECPO#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("ECPO#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("ECPO#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("ECPO#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("ECPO#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("ECPO#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("ECPO#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("ECPO#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("ECPO#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("ECPO#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("ECPO#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("ECPO#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("ECPO#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("ECPO#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("ECPO#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("ECPO#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("ECPO#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("ECPO#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("ECPO#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("ECPO#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("ECPO#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("ECPO#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("ECPO#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("ECPO#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToPPO = shouldNavigateToPage(data, "PPO");
+			try {
+			if (navigateToPPO) {
+				subTest = report.startTest("Policy Purchase Option summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Policy Purchase Option")
+						.validateBD_BenefitType(data.get("PPO#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("PPO#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("PPO#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("PPO#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("PPO#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("PPO#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("PPO#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("PPO#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("PPO#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("PPO#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("PPO#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("PPO#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("PPO#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("PPO#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("PPO#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("PPO#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("PPO#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("PPO#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("PPO#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("PPO#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("PPO#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("PPO#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("PPO#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("PPO#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("PPO#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("PPO#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("PPO#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("PPO#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("PPO#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("PPO#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("PPO#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("PPO#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("PPO#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("PPO#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("PPO#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("PPO#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("PPO#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("PPO#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("PPO#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("PPO#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("PPO#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("PPO#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("PPO#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("PPO#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("PPO#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("PPO#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("PPO#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("PPO#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("PPO#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("PPO#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("PPO#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("PPO#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("PPO#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("PPO#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("PPO#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("PPO#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("PPO#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("PPO#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("PPO#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("PPO#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("PPO#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("PPO#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("PPO#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("PPO#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("PPO#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("PPO#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("PPO#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("PPO#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("PPO#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("PPO#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("PPO#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("PPO#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("PPO#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("PPO#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("PPO#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("PPO#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("PPO#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("PPO#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("PPO#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("PPO#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("PPO#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("PPO#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("PPO#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("PPO#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				handleException(e, subTest, test, driver);
+				//subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				//subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToSPPO = shouldNavigateToPage(data, "SPPO");
+			try {
+			if (navigateToSPPO) {
+				subTest = report.startTest("Spouse Paid Up Insurance Purchase Option summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Spouse Paid Up Insurance Purchase Option")
+						.validateBD_BenefitType(data.get("SPPO#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("SPPO#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("SPPO#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("SPPO#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("SPPO#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("SPPO#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("SPPO#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("SPPO#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("SPPO#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("SPPO#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("SPPO#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("SPPO#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("SPPO#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("SPPO#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("SPPO#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("SPPO#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("SPPO#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("SPPO#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("SPPO#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("SPPO#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("SPPO#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("SPPO#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("SPPO#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("SPPO#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("SPPO#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("SPPO#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("SPPO#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("SPPO#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("SPPO#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("SPPO#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("SPPO#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("SPPO#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("SPPO#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("SPPO#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("SPPO#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("SPPO#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("SPPO#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("SPPO#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("SPPO#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("SPPO#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("SPPO#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("SPPO#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("SPPO#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("SPPO#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("SPPO#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("SPPO#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("SPPO#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("SPPO#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("SPPO#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("SPPO#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("SPPO#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("SPPO#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("SPPO#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("SPPO#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("SPPO#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("SPPO#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("SPPO#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("SPPO#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("SPPO#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("SPPO#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("SPPO#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("SPPO#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("SPPO#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("SPPO#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("SPPO#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("SPPO#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("SPPO#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("SPPO#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("SPPO#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("SPPO#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("SPPO#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("SPPO#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("SPPO#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("SPPO#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("SPPO#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("SPPO#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("SPPO#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("SPPO#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("SPPO#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("SPPO#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("SPPO#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("SPPO#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("SPPO#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("SPPO#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			boolean navigateToLBR = shouldNavigateToPage(data, "LBR");
+			try {
+			if (navigateToLBR) {
+				subTest = report.startTest("Living Benefit Rider summary fields validation");
+				policyHomePage.test = subTest;
+				policyHomePage.goToCoveragesTab()
+						.viewCoverage("Base Policy Coverage - Life")
+						.gotoBenefitUnderBaseCoverageLife("Living Benefit Rider")	
+						.validateBD_BenefitType(data.get("LBR#BD_BenefitType"),includeBlankValue)
+						.validateBD_Status(data.get("LBR#BD_Status"),includeBlankValue)
+						.validateBD_IssueDate(data.get("LBR#BD_IssueDate"),includeBlankValue)
+						.validateBD_IssueAge(data.get("LBR#BD_IssueAge"),includeBlankValue)
+						.validateBD_Amount(data.get("LBR#BD_Amount"),includeBlankValue)
+						.validateBD_Premium(data.get("LBR#BD_Premium"),includeBlankValue)
+						.validateBD_EffectiveDateofBenefit(data.get("LBR#BD_EffectiveDateofBenefit"),includeBlankValue)
+						.validateBD_MatureExpiryDate(data.get("LBR#BD_MatureExpiryDate"),includeBlankValue)
+						.validateBD_GIOOptRemaining(data.get("LBR#BD_GIOOptRemaining"),includeBlankValue)
+						.validateBD_GIONextDate(data.get("LBR#BD_GIONextDate"),includeBlankValue)
+						.validateBD_BenefitRecordStartDate(data.get("LBR#BD_BenefitRecordStartDate"),includeBlankValue)
+						.validateBD_BenefitRecordEndDate(data.get("LBR#BD_BenefitRecordEndDate"),includeBlankValue)
+						.validateBD_ExtraRatingFactor(data.get("LBR#BD_ExtraRatingFactor"),includeBlankValue)
+						.validateBD_BenefitPayable(data.get("LBR#BD_BenefitPayable"),includeBlankValue)
+						.validateBD_PriorClaimEndDate(data.get("LBR#BD_PriorClaimEndDate"),includeBlankValue)
+						.validateBD_DisabilityDate(data.get("LBR#BD_DisabilityDate"),includeBlankValue)
+						.validateBD_RateClass(data.get("LBR#BD_RateClass"),includeBlankValue)
+						.validateBD_SmokerStatus(data.get("LBR#BD_SmokerStatus"),includeBlankValue)
+						.validateBD_TerminationDate(data.get("LBR#BD_TerminationDate"),includeBlankValue)
+						.validateBD_BenType(data.get("LBR#BD_BenType"),includeBlankValue)
+						.validateBD_BenefitOption(data.get("LBR#BD_BenefitOption"),includeBlankValue)
+						.validateBD_FlatExtraAmt(data.get("LBR#BD_FlatExtraAmt"),includeBlankValue)
+						.validateBD_FlatExtraYears(data.get("LBR#BD_FlatExtraYears"),includeBlankValue)
+						.validateBD_TableRating(data.get("LBR#BD_TableRating"),includeBlankValue)
+						.validateBD_FormNumber(data.get("LBR#BD_FormNumber"),includeBlankValue)
+						.validateBD_MinimumPremium(data.get("LBR#BD_MinimumPremium"),includeBlankValue)
+						.validateBD_TargetPremium(data.get("LBR#BD_TargetPremium"),includeBlankValue)
+						.validateBD_PermanentFlatExtra(data.get("LBR#BD_PermanentFlatExtra"),includeBlankValue)
+						.validateBD_Permanent(data.get("LBR#BD_Permanent"),includeBlankValue)
+						.validateBD_SystematicAllocationStatus(data.get("LBR#BD_SystematicAllocationStatus"),includeBlankValue)
+						.validateBD_BenAvailableDate(data.get("LBR#BD_BenAvailableDate"),includeBlankValue)
+						.validateBD_BenefitBaseRollupInterestRate(data.get("LBR#BD_BenefitBaseRollupInterestRate"),includeBlankValue)
+						.validateBD_NewBenefitOption(data.get("LBR#BD_NewBenefitOption"),includeBlankValue)
+						.validateCD_Transaction(data.get("LBR#CD_Transaction"),includeBlankValue)
+						.validateCD_WriteOption(data.get("LBR#CD_WriteOption"),includeBlankValue)
+						.validateMD_RiderQABIndicator(data.get("LBR#MD_RiderQABIndicator"),includeBlankValue)
+						.validateMD_ModalPremium(data.get("LBR#MD_ModalPremium"),includeBlankValue)
+						.validateMD_OriginalFaceAmount(data.get("LBR#MD_OriginalFaceAmount"),includeBlankValue)
+						.validateMD_QuotedClaimAmount(data.get("LBR#MD_QuotedClaimAmount"),includeBlankValue)
+						.validateMD_ClaimAmount(data.get("LBR#MD_ClaimAmount"),includeBlankValue)
+						.validateMD_Terminated(data.get("LBR#MD_Terminated"),includeBlankValue)
+						.validateMD_PayorIssueAge(data.get("LBR#MD_PayorIssueAge"),includeBlankValue)
+						.validateMD_PayorGender(data.get("LBR#MD_PayorGender"),includeBlankValue)
+						.validateMD_ValuePerUnit(data.get("LBR#MD_ValuePerUnit"),includeBlankValue)
+						.validateMD_Units(data.get("LBR#MD_Units"),includeBlankValue)
+						.validateMD_PaymentPeriod(data.get("LBR#MD_PaymentPeriod"),includeBlankValue)
+						.validateMD_Decision(data.get("LBR#MD_Decision"),includeBlankValue)
+						.validateMD_DecisionComment(data.get("LBR#MD_DecisionComment"),includeBlankValue)
+						.validateMD_Reason(data.get("LBR#MD_Reason"),includeBlankValue)
+						.validateMD_Gender(data.get("LBR#MD_Gender"),includeBlankValue)
+						.validateMD_BenefitDescription(data.get("LBR#MD_BenefitDescription"),includeBlankValue)
+						.validateMD_GuidelineLevelPremium(data.get("LBR#MD_GuidelineLevelPremium"),includeBlankValue)
+						.validateMD_GuidelineSinglePremium(data.get("LBR#MD_GuidelineSinglePremium"),includeBlankValue)
+						.validateMD_NLGPremium(data.get("LBR#MD_NLGPremium"),includeBlankValue)
+						.validateMD_GMWBPayoutOpt(data.get("LBR#MD_GMWBPayoutOpt"),includeBlankValue)
+						.validateMD_GMWBMinExerciseDate(data.get("LBR#MD_GMWBMinExerciseDate"),includeBlankValue)
+						.validateMD_Tamra7PayPrem(data.get("LBR#MD_Tamra7PayPrem"),includeBlankValue)
+						.validateMD_Tamra7PayNSP(data.get("LBR#MD_Tamra7PayNSP"),includeBlankValue)
+						.validateMD_TamraFaceAmt(data.get("LBR#MD_TamraFaceAmt"),includeBlankValue)
+						.validateMD_PlanCode(data.get("LBR#MD_PlanCode"),includeBlankValue)
+						.validateMD_ShortName(data.get("LBR#MD_ShortName"),includeBlankValue)
+						.validateMD_PlanDescription(data.get("LBR#MD_PlanDescription"),includeBlankValue)
+						.validateMD_FlatExtraPrem(data.get("LBR#MD_FlatExtraPrem"),includeBlankValue)
+						.validateMD_PermFlatExtraPrem(data.get("LBR#MD_PermFlatExtraPrem"),includeBlankValue)
+						.validateMD_BenefitStatus(data.get("LBR#MD_BenefitStatus"),includeBlankValue)
+						.validateMD_SubStandardExtraPrem(data.get("LBR#MD_SubStandardExtraPrem"),includeBlankValue)
+						.validateMD_IsBaseClaim(data.get("LBR#MD_IsBaseClaim"),includeBlankValue)
+						.validateMD_PremiumCeaseDate(data.get("LBR#MD_PremiumCeaseDate"),includeBlankValue)
+						.validateMD_IsPartOfClaim(data.get("LBR#MD_IsPartOfClaim"),includeBlankValue)
+						.validateMD_BenefitSequence(data.get("LBR#MD_BenefitSequence"),includeBlankValue)
+						.validateMD_NextPremAdjustmentDate(data.get("LBR#MD_NextPremAdjustmentDate"),includeBlankValue)
+						.validateMD_NewGender(data.get("LBR#MD_NewGender"),includeBlankValue)
+						.validateMD_NewDOB(data.get("LBR#MD_NewDOB"),includeBlankValue)
+						.validateMD_NewIssueAge(data.get("LBR#MD_NewIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredIssueAge(data.get("LBR#MD_AdditionalInsuredIssueAge"),includeBlankValue)
+						.validateMD_AdditionalInsuredDateOfBirth(data.get("LBR#MD_AdditionalInsuredDateOfBirth"),includeBlankValue)
+						.validateMD_AdditionalInsuredGender(data.get("LBR#MD_AdditionalInsuredGender"),includeBlankValue)
+						.validateMD_AnnualizedPremium(data.get("LBR#MD_AnnualizedPremium"),includeBlankValue)
+						.validateMD_CoveredLife1DOB(data.get("LBR#MD_CoveredLife1DOB"),includeBlankValue)
+						.validateMD_CoveredLife1Gender(data.get("LBR#MD_CoveredLife1Gender"),includeBlankValue)
+						.validateMD_CoveredLife2DOB(data.get("LBR#MD_CoveredLife2DOB"),includeBlankValue)
+						.validateMD_CoveredLife2Gender(data.get("LBR#MD_CoveredLife2Gender"),includeBlankValue)
+						.validateMD_GMWBPaymentBasis(data.get("LBR#MD_GMWBPaymentBasis"),includeBlankValue)
+						.validateMD_WPModalPremium(data.get("LBR#MD_WPModalPremium"),includeBlankValue);
+				test.appendChild(subTest);
+				report.endTest(subTest);				
+			}
+			}catch(Exception e) {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+				test.appendChild(subTest);
+				report.endTest(subTest);
+			}
+			
+			
+			report.endTest(subTest);
+										
+	report.endTest(test);
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+			subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+			test.appendChild(subTest);
+			//if(testCaseRetryCount.get(data.get("PolicyNumber"))==2)
+				addTestToMainReport(test);
+			driver.close();
+			Assert.fail();
+		}
+
+		addTestToMainReport(test);
+		driver.close();
+	}
+
+	public void logError(ExtentTest localTest, Exception e, WebDriver driver) {
+		String screenshotFileName = "/Screenshots/Screenshot_" + Math.random() + ".png";
+		String screenshotPath = System.getProperty("user.dir") + folderPath.substring(2) + screenshotFileName;
+		screenshotFileName = "./" + screenshotFileName;
+		File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+		try {
+			FileUtils.copyFile(scrFile, new File(screenshotPath));
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+		localTest.log(LogStatus.ERROR, "Exception Occured and Execution Stopped.\n" + e.getLocalizedMessage()
+				+ localTest.addScreenCapture(screenshotFileName));
+	}
+
+	@AfterClass(alwaysRun = true)
+	public void reporee(ITestContext result) {
+		try {
+			FileUtils.deleteDirectory(new File(folderPath + "/Additional Supporting Reports"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		mainReport.flush();
+	}
+
+	public void addTestToMainReport(ExtentTest test) {
+		ITest grandParentTest = test.getTest();
+		ExtentTest parentTest = mainReport.startTest(grandParentTest.getName());
+		List<com.relevantcodes.extentreports.model.Test> children = grandParentTest.getNodeList();
+		for (int k = 0; k < children.size(); k++) {
+			ExtentTest child = mainReport.startTest(children.get(k).getName());
+			List<Log> logs = children.get(k).getLogList();
+
+			for (int i = 0; i < logs.size(); i++) {
+				child.log(logs.get(i).getLogStatus(), logs.get(i).getDetails());
+
+			}
+			parentTest.appendChild(child);
+			mainReport.endTest(child);
+		}
+
+		mainReport.endTest(parentTest);
+	}
+	
+	public static boolean shouldNavigateToPage(HashMap<String, String> data, String pageName) {
+		//Iterate through the HashMap to check for any matching keys
+		for (Map.Entry<String, String> entry : data.entrySet()) {
+			String key = entry.getKey();
+			String value = entry.getValue();
+			
+			//Check if the key starts with the given pageName and has a non-empty value
+			if(key.startsWith(pageName+"#") && value != null && !value.trim().isEmpty()) {
+				return true; //Data exists for the page
+			}
+		}
+		
+		return false; //No data found for the page
+	}
+	
+	public void handleException(Exception e, ExtentTest subTest, ExtentTest test, WebDriver driver) {
+		String exceptionMessage = e.getMessage();
+		
+		if(exceptionMessage != null) {
+			if(exceptionMessage.contains("waiting for element to be clickable: By.xpath: //div[text()='Accidental Death Benefit Rider']")) {
+				subTest.log(LogStatus.FAIL, "Could not find Accidental Death Benefit Rider under Benefits");
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+			}else if (exceptionMessage.contains("waiting for element to be clickable: By.xpath: //div[text()='Policy Purchase Option']")) {
+				subTest.log(LogStatus.FAIL, "Could not find Policy Purchase Option Rider under Benefits");
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+			}else {
+				subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+				subTest.log(LogStatus.FAIL, "Screenshot Reference." + test.addScreenCapture(takeScreenshot(driver, folderPath)));
+			}
+		}
+	}
+
+}
