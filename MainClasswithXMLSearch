@@ -1,0 +1,90 @@
+package com.nyl.main;
+
+import org.testng.TestNG;
+import org.testng.xml.XmlSuite;
+
+import java.io.File;
+
+public class MainClass {
+
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("Usage: java -jar your-jar.jar <testng-xml-file> <test-data-sheet>");
+            System.exit(1);
+        }
+
+        String testngXmlFileName = args[0];
+        String xlsxFilePath = args[1];
+
+        System.out.println("Running TestNG Suite: " + testngXmlFileName);
+        System.out.println("Using Test Data Sheet: " + xlsxFilePath);
+
+        // Locate the TestNG XML file recursively within the 'testSuites' folder
+        File testSuitesDir = new File(System.getProperty("user.dir"), "testSuites");
+        File testngFile = findFileRecursively(testSuitesDir, testngXmlFileName);
+
+        if (testngFile == null) {
+            System.err.println("Error: TestNG XML file not found in the 'testSuites' folder or its subfolders: " + testngXmlFileName);
+            System.exit(1);
+        }
+
+        System.out.println("Found TestNG XML file at: " + testngFile.getAbsolutePath());
+
+        // Validate the test data sheet path
+        File testDataSheet = new File(xlsxFilePath);
+        if (!testDataSheet.exists()) {
+            System.err.println("Error: Test data sheet not found: " + xlsxFilePath);
+            System.exit(1);
+        }
+
+        try {
+            // Create a new TestNG instance
+            TestNG testng = new TestNG();
+
+            // Set the TestNG XML suite file to run
+            testng.setTestSuites(java.util.Collections.singletonList(testngFile.getAbsolutePath()));
+
+            // Add the test data sheet parameter dynamically
+            XmlSuite suite = new XmlSuite();
+            suite.setName("DynamicSuite");
+            suite.getTests().forEach(test -> test.addParameter("xlsxFilePath", xlsxFilePath));
+
+            // Run TestNG
+            testng.run();
+
+        } catch (Exception e) {
+            System.err.println("Error while running TestNG Suite: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Recursively searches for a file with the given name in the specified directory.
+     *
+     * @param dir      the root directory to start searching from
+     * @param fileName the name of the file to search for
+     * @return the file if found, or null if not found
+     */
+    private static File findFileRecursively(File dir, String fileName) {
+        if (dir == null || !dir.isDirectory()) {
+            return null;
+        }
+
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    // Recurse into subdirectories
+                    File found = findFileRecursively(file, fileName);
+                    if (found != null) {
+                        return found;
+                    }
+                } else if (file.getName().equalsIgnoreCase(fileName)) {
+                    // Found the file
+                    return file;
+                }
+            }
+        }
+        return null;
+    }
+}
