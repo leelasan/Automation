@@ -1,0 +1,245 @@
+package test.fast.CreatePolicyforLife;
+
+import com.nyl.base.WebBase;
+import com.nyl.utilities.EnvParameters;
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+import com.relevantcodes.extentreports.model.ITest;
+import com.relevantcodes.extentreports.model.Log;
+
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.config.SSLConfig;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.testng.Assert;
+import org.testng.ITestContext;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Properties;
+
+//Imports for CSV logging
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+public class CreatePolicyWithAPI_RestAssured extends WebBase {
+	public static ExtentReports mainReport;
+    public HashMap<String, Integer> testCaseRetryCount = new HashMap<>();
+    public String folderPath;
+    
+    //Parameters for CSV logging
+    
+    private static String METRICS_CSV_FILE;// = "C:\\Users\\T95UK5O\\git\\FASTWebAutomation\\ExecutionLog\\execution_metrics.csv"; // CSV file for execution metrics
+    private LocalDateTime executionStartTime;
+    private LocalDateTime executionEndTime;
+    private int policiesCreated;
+    private String userID;
+
+    @BeforeClass(alwaysRun = true)
+    public void reportInitialization(ITestContext context) {
+    	// For CSV logging
+    	METRICS_CSV_FILE = context.getCurrentXmlTest().getParameter("CSVLogger");
+    	executionStartTime = LocalDateTime.now(); // Track start time
+        policiesCreated = 0; // Initialize counter
+        initializeCsvFile(); // Ensure the CSV file header exists
+
+        // Disable SSL validation
+        RestAssured.config = RestAssured.config().sslConfig(SSLConfig.sslConfig().relaxedHTTPSValidation());
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HHmmss");
+        LocalDateTime now = LocalDateTime.now();
+        folderPath = ".//Reports/Functional Test Reports/CreatePolicyWithAPI/Test Report_" + dtf.format(now);
+        String fileName = folderPath + "/CreatePolicyWithAPI.html";
+        mainReport = new ExtentReports(fileName);
+        mainReport.loadConfig(new File(".//Config Files/Functional Test Report-config.xml"));
+    }
+
+    @Test
+    public void createPolicy(ITestContext context) throws Exception {
+    	ExtentTest subTest = null;
+		ExtentTest test = null;
+		ExtentReports report = new ExtentReports("dummy.html");
+        test = mainReport.startTest("Create Policy");
+        subTest = mainReport.startTest("Create Policy Using API Calls");
+
+        try {
+            String folderPath = context.getCurrentXmlTest().getParameter("XMLsFolderPath");
+            subTest.log(LogStatus.INFO, "Step1: Received the XML folder path: " + folderPath);
+
+            File[] listOfFiles = new File(folderPath).listFiles((dir, name) -> name.toLowerCase().endsWith(".xml"));
+            Assert.assertNotNull(listOfFiles, "No XML files found in the directory");
+            subTest.log(LogStatus.INFO, "Step2: Capturing all the .xml files from the given folder path");
+
+            String token = getBearerToken(subTest);
+            test.appendChild(subTest);
+
+            for (File file : listOfFiles) {
+                if (file.isFile()) {
+                    subTest = mainReport.startTest("Create Policy Using API Calls for XML: " + file.getName());
+                    String encodedXML = encodeXMLToBase64(file.getAbsolutePath());
+                    subTest.log(LogStatus.PASS, "XML encoded to Base64");
+					System.out.println("Processing file: " + file.getName());
+
+
+                    String policyNumber = createPolicy(token, encodedXML);
+                    policiesCreated++; // Increment counter for CSV logging
+                    subTest.log(LogStatus.PASS, "Policy created with Policy Number: " + policyNumber);
+                    test.appendChild(subTest);
+					report.endTest(subTest);
+
+                }
+            }
+        } catch (Exception e) {
+        	e.printStackTrace();
+			subTest.log(LogStatus.FAIL, "Exception Occured - " + e.getLocalizedMessage());
+			test.appendChild(subTest);
+			//if(testCaseRetryCount.get(data.get("PolicyNumber"))==2)
+				addTestToMainReport(test);
+			Assert.fail();
+        }
+        
+		report.endTest(test);
+        addTestToMainReport(test);
+    }
+
+    public String getBearerToken(ExtentTest subTest) throws Exception {
+        Properties prop = new Properties();
+        try (FileInputStream fis = new FileInputStream("config.properties")) {
+            prop.load(fis);
+        }
+        userID = prop.getProperty("User_Name");
+        String password = prop.getProperty("Password");
+        subTest.log(LogStatus.INFO, "User ID and Password captured from Config File");
+
+        String payload = "{ \"username\" : \"" + userID + "\", \"password\" : \"" + password + "\" }";
+        RestAssured.baseURI = EnvParameters.tokenApiUrl;
+
+        Response response = RestAssured.given()
+                .header("Content-Type", "application/json")
+                .header("X-API-KEY", EnvParameters.XAPIKEY)
+                .body(payload)
+                .post();
+
+        Assert.assertEquals(response.getStatusCode(), 200, "Token API response code should be 200");
+        String token = new JSONObject(response.asString()).getString("token");
+        subTest.log(LogStatus.PASS, "Token generated: " + token);
+        return token;
+    }
+
+    public String createPolicy(String token, String encodedXML) throws Exception {
+        String payload = "{ \"encodedACORDXml\" : \"" + encodedXML + "\" }";
+        RestAssured.baseURI = EnvParameters.policyApiUrl;
+
+        Response response = RestAssured.given()
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + token)
+                .header("X-API-KEY", EnvParameters.XAPIKEY)
+                .body(payload)
+                .post();
+
+        Assert.assertEquals(response.getStatusCode(), 200, "Policy creation API response code should be 200");
+
+        String responseBody = response.asString();
+        return new JSONObject(responseBody).getJSONObject("PolicyHdr").getJSONObject("PolicyHdrData").getString("PolicyNumber");
+    }
+
+    public String encodeXMLToBase64(String filePath) throws Exception {
+        File file = new File(filePath);
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] bytes = fis.readAllBytes();
+            return Base64.encodeBase64String(bytes);
+        }
+    }
+    
+    public void logError(ExtentTest localTest, Exception e, WebDriver driver) {
+		String screenshotFileName = "/Screenshots/Screenshot_" + Math.random() + ".png";
+		String screenshotPath = System.getProperty("user.dir") + folderPath.substring(2) + screenshotFileName;
+		screenshotFileName = "./" + screenshotFileName;
+		File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+		try {
+			FileUtils.copyFile(scrFile, new File(screenshotPath));
+		} catch (IOException e1) {
+
+			e1.printStackTrace();
+		}
+		localTest.log(LogStatus.ERROR, "Exception Occured and Execution Stopped.\n" + e.getLocalizedMessage()
+				+ localTest.addScreenCapture(screenshotFileName));
+	}
+
+
+    @AfterClass(alwaysRun = true)
+	public void reporee(ITestContext result) {
+    	// For CSV logging
+    	executionEndTime = LocalDateTime.now(); // Track end time
+        logExecutionMetricsToCsv(); // Log metrics to CSV
+		try {
+			FileUtils.deleteDirectory(new File(folderPath + "/Additional Supporting Reports"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		mainReport.flush();
+	}
+ 
+    public void addTestToMainReport(ExtentTest test) {
+		ITest grandParentTest = test.getTest();
+		ExtentTest parentTest = mainReport.startTest(grandParentTest.getName());
+		List<com.relevantcodes.extentreports.model.Test> children = grandParentTest.getNodeList();
+		for (int k = 0; k < children.size(); k++) {
+			ExtentTest child = mainReport.startTest(children.get(k).getName());
+			List<Log> logs = children.get(k).getLogList();
+
+			for (int i = 0; i < logs.size(); i++) {
+				child.log(logs.get(i).getLogStatus(), logs.get(i).getDetails());
+
+			}
+			parentTest.appendChild(child);
+			mainReport.endTest(child);
+		}
+
+		mainReport.endTest(parentTest);
+	}
+
+    private void initializeCsvFile() {
+        try (FileWriter writer = new FileWriter(METRICS_CSV_FILE, true)) {
+            // Write header if the file is empty
+            File csvFile = new File(METRICS_CSV_FILE);
+            if (csvFile.length() == 0) {
+                writer.write("User Name, Execution Start,Execution End,Duration (seconds),Policies Created\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void logExecutionMetricsToCsv() {
+        try (FileWriter writer = new FileWriter(METRICS_CSV_FILE, true)) {
+            Duration duration = Duration.between(executionStartTime, executionEndTime);
+            String logEntry = String.format(
+                "%s,%s,%s,%d,%d\n",
+                userID, executionStartTime, executionEndTime, duration.toSeconds(), policiesCreated
+            );
+            writer.write(logEntry);
+            System.out.println("Execution metrics logged to CSV successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
