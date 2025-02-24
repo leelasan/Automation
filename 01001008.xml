@@ -1,0 +1,593 @@
+<XMLWrapper><Input><TXLife xmlns="http://ACORD.org/Standards/Life/2">
+  <TXLifeRequest PrimaryObjectID="Holding_Primary">
+    <TransRefGUID>8EA0F858-0ABE-2110-2AD9-F27AEA2AEEC9</TransRefGUID>
+    <TransType tc="103">Retail 103</TransType>
+    <TransSubType tc="10301">Life Insurance Application</TransSubType>
+    <TransExeDate>2025-01-22</TransExeDate>
+    <TransExeTime>10:28:21</TransExeTime>
+    <OLifE>
+      <Holding id="Holding_Primary">
+        <Policy>
+          <CarrierAdminSystem>ALIP</CarrierAdminSystem>
+          <PolNumber>01001008</PolNumber>
+          <LineOfBusiness tc="1">Life</LineOfBusiness>
+          <ProductType tc="2">Term</ProductType>
+          <ProductCode>LT-AD123</ProductCode>
+          <ProductVersionCode>123</ProductVersionCode>
+          <CarrierCode>81353</CarrierCode>
+          <PlanName>Level Term</PlanName>
+          <PolicyStatus tc="24">Decisioned</PolicyStatus>
+          <Jurisdiction tc="21">KY</Jurisdiction>
+          <EffDate>2024-11-25</EffDate>
+          <StatusChangeDate>2025-01-22</StatusChangeDate>
+          <PaymentMode tc="1">Annual</PaymentMode>
+          <PaymentAmt>4215</PaymentAmt>
+          <PaymentMethod tc="7">Automatic Withdrawals (EFT)</PaymentMethod>
+          <Life>
+            <SuspenseAmt>176.00</SuspenseAmt>
+            <FaceAmt>5000000.00</FaceAmt>
+            <Coverage id="BaseCoverage">
+              <PlanName>Level Term</PlanName>
+              <ProductCode>CT</ProductCode>
+              <ProductVersionCode>123</ProductVersionCode>
+              <LifeCovStatus tc="0">Decisioned</LifeCovStatus>
+              <LifeCovTypeCode tc="6">6</LifeCovTypeCode>
+              <IndicatorCode tc="1">Base</IndicatorCode>
+              <ExpiryDate>2025-04-21</ExpiryDate>
+              <CurrentAmt>5000000</CurrentAmt>
+              <InitCovAmt>5000000</InitCovAmt>
+              <ValuationClassType tc="2">Life</ValuationClassType>
+              <LevelPremiumPeriod>15</LevelPremiumPeriod>
+              <CovOption id="POL_LBR_d2246e13146" LifeParticipantRefID="LifeParticipant_d2246e13146">
+                <PlanName>Living Benefits Rider</PlanName>
+                <ProductCode>LBR</ProductCode>
+                <LifeCovOptTypeCode tc="1">Living Benefits Rider</LifeCovOptTypeCode>
+                <TobaccoPremiumBasis tc="1">Non Smoker</TobaccoPremiumBasis>
+                <NetCurrentAmt>0.00</NetCurrentAmt>
+                <OLifEExtension VendorCode="008">
+                  <CovOptionExtension>
+                    <TotalRating>100</TotalRating>
+                    <UnderwritingStatus tc="6">Approve</UnderwritingStatus>
+                    <ExtraPrems>
+                      <ExtraPrem>
+                        <PremYears>0</PremYears>
+                      </ExtraPrem>
+                    </ExtraPrems>
+                  </CovOptionExtension>
+                </OLifEExtension>
+              </CovOption>
+              <LifeParticipant PartyID="Party_d2246e13146" id="LifeParticipant_d2246e13146">
+                <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+                <IssueAge>45</IssueAge>
+                <PermFlatExtraAmt>2.4</PermFlatExtraAmt>
+                <TobaccoPremiumBasis tc="1">Non Smoker</TobaccoPremiumBasis>
+                <ClassName>Non-Smoker</ClassName>
+                <UnderwritingStatus tc="2147483647">Rate</UnderwritingStatus>
+                <UnderwritingResult>
+                  <OLifEExtension VendorCode="008">
+                    <UnderwritingResultReason1>Build</UnderwritingResultReason1>
+                    <UnderwritingResultExtension>
+                      <DecisionIndicator>Traditional</DecisionIndicator>
+                      <LifeSpanEligibilityInd tc="2">No</LifeSpanEligibilityInd>
+                    </UnderwritingResultExtension>
+                  </OLifEExtension>
+                </UnderwritingResult>
+                <OLifEExtension VendorCode="008">
+                  <LifeParticipantExtension>
+                    <TotalRating>100</TotalRating>
+                    <ExtraPrems>
+                      <ExtraPrem>
+                        <PremYears>5</PremYears>
+                        <PremRating>2.4</PremRating>
+                        <PremAmount>2.4</PremAmount>
+                      </ExtraPrem>
+                    </ExtraPrems>
+                    <BestPossibleRating>Select Preferred</BestPossibleRating>
+                    <Debits>0</Debits>
+                    <Credits>0</Credits>
+                    <UninsurableRiskInd tc="0">no</UninsurableRiskInd>
+                  </LifeParticipantExtension>
+                </OLifEExtension>
+              </LifeParticipant>
+              <LifeParticipant PartyID="Party_d2246e25034">
+                <LifeParticipantRoleCode tc="7">7</LifeParticipantRoleCode>
+                <ParticipationPct>100.0</ParticipationPct>
+                <DistributionOption tc="2">Percentage</DistributionOption>
+              </LifeParticipant>
+              <OLifEExtension VendorCode="008">
+                <TriggerType>Manual</TriggerType>
+                <OriginalCoverageAmt>5000000</OriginalCoverageAmt>
+                <SelectPaidUp>yes</SelectPaidUp>
+                <ExtensionOfCoveragePrivilege>No</ExtensionOfCoveragePrivilege>
+                <CoverageExtension>
+                  <PaidUpOptInd tc="0">no</PaidUpOptInd>
+                </CoverageExtension>
+              </OLifEExtension>
+            </Coverage>
+            <LifeUSA>
+              <Exchange1035Ind tc="0">no</Exchange1035Ind>
+            </LifeUSA>
+          </Life>
+          <ApplicationInfo>
+            <HOAssignedAppNumber>NB21-19416570</HOAssignedAppNumber>
+            <ApplicationType tc="1">1</ApplicationType>
+            <ApplicationJurisdiction tc="21">KY</ApplicationJurisdiction>
+            <SignedDate>2025-01-21</SignedDate>
+            <SubmissionDate>2025-01-21</SubmissionDate>
+            <SubmissionType tc="2">Electronic</SubmissionType>
+            <HOReceiptDate>2025-01-21</HOReceiptDate>
+            <RequestedPolDate>2024-11-25</RequestedPolDate>
+            <ReplacementInd tc="0">no</ReplacementInd>
+            <IllustrationProvidedInd tc="0">no</IllustrationProvidedInd>
+            <ReqPolicyDeliveryMethod tc="0">no</ReqPolicyDeliveryMethod>
+            <SignatureInfo SignaturePartyID="Party_d2246e13146">
+              <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
+              <SignatureState tc="21">KY</SignatureState>
+              <OLifEExtension VendorCode="008">
+                <SignatureInfoExtension>
+                  <WillSignRemotelyInd tc="0">no</WillSignRemotelyInd>
+                </SignatureInfoExtension>
+              </OLifEExtension>
+            </SignatureInfo>
+            <SignatureInfo SignaturePartyID="Party_d2246e13146">
+              <SignatureRoleCode tc="1">Primary Insured</SignatureRoleCode>
+              <SignatureState tc="21">KY</SignatureState>
+              <OLifEExtension VendorCode="008">
+                <SignatureInfoExtension>
+                  <WillSignRemotelyInd tc="0">no</WillSignRemotelyInd>
+                </SignatureInfoExtension>
+              </OLifEExtension>
+            </SignatureInfo>
+            <IdentityVerification VerifiedPartyID="Party_d2246e13146">
+              <Identification>
+                <IdentityVerificationType tc="1000800014">None</IdentityVerificationType>
+              </Identification>
+            </IdentityVerification>
+            <PolicyDeliveryJurisdiction tc="21">KY</PolicyDeliveryJurisdiction>
+            <Interview>
+              <InterviewType tc="2">Phone Interview</InterviewType>
+            </Interview>
+            <OLifEExtension VendorCode="008">
+              <ApplicationInfoExtension>
+                <MilitaryInd tc="0">no</MilitaryInd>
+                <UseProceedsSecuritiesInd tc="0">no</UseProceedsSecuritiesInd>
+                <ReverseMortgageInd tc="0">no</ReverseMortgageInd>
+                <EmployerRelInd tc="0">no</EmployerRelInd>
+                <FastTrackOptInInd tc="0">no</FastTrackOptInInd>
+                <PreferredVendorCode>APPS</PreferredVendorCode>
+                <AOPInd tc="0">no</AOPInd>
+                <UsePDAAccountInd tc="0">no</UsePDAAccountInd>
+                <FamPartnerInd tc="0">no</FamPartnerInd>
+                <TeleAppInd tc="1">yes</TeleAppInd>
+                <L90DTestsInd tc="0">no</L90DTestsInd>
+                <L2YDiagTreatInd tc="0">no</L2YDiagTreatInd>
+                <L2YDisabledInd tc="0">no</L2YDisabledInd>
+                <L2YAdmitHospInd tc="0">no</L2YAdmitHospInd>
+                <ChildPrematureInd tc="0">no</ChildPrematureInd>
+                <ChildBirthUnder5lbsInd tc="0">no</ChildBirthUnder5lbsInd>
+                <EmployerIsOwnerBeneInd tc="0">no</EmployerIsOwnerBeneInd>
+                <InsuredInitialsPresentAckInd tc="0">no</InsuredInitialsPresentAckInd>
+                <HIPAAAuthCopyRequestInd tc="0">no</HIPAAAuthCopyRequestInd>
+                <WillBuyInd tc="0">Does Not Apply</WillBuyInd>
+                <PrimaryInsuredSignedInd tc="1">yes</PrimaryInsuredSignedInd>
+                <AllInsuredsHaveSignedInd tc="0">no</AllInsuredsHaveSignedInd>
+                <AppOwnersHaveSignedInd tc="1">yes</AppOwnersHaveSignedInd>
+                <OtherReqSignatureRcvdInd tc="0">no</OtherReqSignatureRcvdInd>
+                <AgentWitnessSignedInd tc="1">yes</AgentWitnessSignedInd>
+                <InsuredSameAsOwnerIndicator tc="1">yes</InsuredSameAsOwnerIndicator>
+                <JointOwnerIndicator tc="0">no</JointOwnerIndicator>
+                <SuccessorOwnerTC tc="0">no</SuccessorOwnerTC>
+                <PremiumPayerSameAsRoleTC tc="32">Insured</PremiumPayerSameAsRoleTC>
+                <RequestAdvanceCommissionInd tc="0">no</RequestAdvanceCommissionInd>
+                <ChildImpairmentInd tc="0">no</ChildImpairmentInd>
+                <ChildHospNoSchoolL5YInd tc="0">no</ChildHospNoSchoolL5YInd>
+                <UnpaidChangeInd tc="0">no</UnpaidChangeInd>
+                <AddlConversionDataInd tc="0">no</AddlConversionDataInd>
+                <SecondaryAddressNotifyInd tc="0">No</SecondaryAddressNotifyInd>
+                <NoticeNotReadAloudInd tc="0">no</NoticeNotReadAloudInd>
+                <InsdPurchaseGIInd tc="0">Inital</InsdPurchaseGIInd>
+              </ApplicationInfoExtension>
+            </OLifEExtension>
+          </ApplicationInfo>
+          <FinancialActivity>
+            <FinActivityType tc="7">Initial Payment</FinActivityType>
+            <Payment>
+              <PaymentForm tc="7">EFT</PaymentForm>
+              <PaymentAmt>176.0</PaymentAmt>
+            </Payment>
+          </FinancialActivity>
+          <OLifEExtension VendorCode="008">
+            <PolicyExtension>
+              <PremPaidByChkInd tc="0">false</PremPaidByChkInd>
+              <NonTransferOptInd tc="0">no</NonTransferOptInd>
+              <SplitDollarInd tc="0">no</SplitDollarInd>
+              <PolicySubStatus tc="1000800013">Approved</PolicySubStatus>
+              <IllustrationValues>
+                <ModalPremiumAmt>4215</ModalPremiumAmt>
+                <AnnualPremiumAmt>4215</AnnualPremiumAmt>
+              </IllustrationValues>
+              <PolicyAdminValues>
+                <ModalPremiumAmt>4215</ModalPremiumAmt>
+              </PolicyAdminValues>
+              <AmendmentExistsInd tc="0">no</AmendmentExistsInd>
+              <PrintPolicyInd tc="1">TRUE</PrintPolicyInd>
+            </PolicyExtension>
+          </OLifEExtension>
+        </Policy>
+        <HoldingTypeCode tc="2">Policy</HoldingTypeCode>
+        <HoldingStatus tc="3">Proposed</HoldingStatus>
+        <Intent>
+          <ExpenseNeedTypeCode tc="7">Retirement Planning</ExpenseNeedTypeCode>
+        </Intent>
+        <Arrangement>
+          <ArrType tc="39">39</ArrType>
+          <BusinessDayOfMonth tc="34">withdraw all premiums as individual transactions each month</BusinessDayOfMonth>
+          <ArrSource BankingInfoID="Holding_Banking">
+            <ArrSourceKey>Holding_Banking</ArrSourceKey>
+          </ArrSource>
+        </Arrangement>
+        <OLifEExtension VendorCode="008">
+          <HoldingExtension>
+            <InterestSweepInd tc="0">no</InterestSweepInd>
+            <ExpenseChargeAllocationInd tc="0">no</ExpenseChargeAllocationInd>
+          </HoldingExtension>
+        </OLifEExtension>
+      </Holding>
+      <Holding id="Holding_Banking">
+        <HoldingTypeCode tc="7">Banking</HoldingTypeCode>
+        <Banking AppliesToPartyID="Party_Banking_Holding_Banking">
+          <BankAcctType tc="2">Checking</BankAcctType>
+          <AccountNumber>92361077941</AccountNumber>
+          <RoutingNum>122199983</RoutingNum>
+          <AcctHolderName>Herbert Stokes</AcctHolderName>
+          <BankName>TEST BANK</BankName>
+        </Banking>
+      </Holding>
+      <Holding id="Holding_Illus">
+        <Policy>
+          <Life>
+            <Coverage>
+              <LifeParticipant PartyID="Party_Illustration">
+                <LifeParticipantRoleCode tc="1">Primary Insured</LifeParticipantRoleCode>
+                <TobaccoPremiumBasis tc="1">Non Smoker</TobaccoPremiumBasis>
+                <ClassName>Select Preferred</ClassName>
+              </LifeParticipant>
+            </Coverage>
+          </Life>
+          <ApplicationInfo>
+            <IllustrationProvidedInd tc="1">yes</IllustrationProvidedInd>
+          </ApplicationInfo>
+        </Policy>
+        <HoldingTypeCode tc="2">2</HoldingTypeCode>
+        <HoldingStatus tc="3">Proposed</HoldingStatus>
+      </Holding>
+      <Grouping id="Grouping_Household_PI">
+        <Household>
+          <NumChildren>0</NumChildren>
+          <OLifEExtension VendorCode="008">
+            <HouseholdExtension PartyID="Party_d2246e13146">
+              <NumDependents>0</NumDependents>
+            </HouseholdExtension>
+          </OLifEExtension>
+        </Household>
+      </Grouping>
+      <FormInstance id="Form_PART1">
+        <FormName>PART1</FormName>
+        <ProviderFormNumber>217-500 ICC17</ProviderFormNumber>
+        <OriginalInputMode tc="1">Input Electronically</OriginalInputMode>
+        <DocumentControlNumber>PART1</DocumentControlNumber>
+        <FormResponse>
+          <QuestionNumber>SectionFQ1</QuestionNumber>
+          <ResponseCode>0</ResponseCode>
+        </FormResponse>
+        <FormResponse>
+          <QuestionNumber>SectionFQ2</QuestionNumber>
+          <ResponseCode>0</ResponseCode>
+        </FormResponse>
+        <FormResponse>
+          <QuestionNumber>SectionFQ3</QuestionNumber>
+          <ResponseCode>0</ResponseCode>
+        </FormResponse>
+        <SignatureInfo SignaturePartyID="Party_d2246e13146">
+          <SignatureRoleCode tc="1">Primary Insured</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+          <SignatureState tc="21">KY</SignatureState>
+        </SignatureInfo>
+        <SignatureInfo SignaturePartyID="Party_d2246e25357">
+          <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+        </SignatureInfo>
+        <SignatureInfo SignaturePartyID="Party_d2246e13146">
+          <SignatureRoleCode tc="22">Applicant</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+          <SignaturePurpose tc="1000800011">ILLUSTRATION</SignaturePurpose>
+        </SignatureInfo>
+        <SignatureInfo SignaturePartyID="Party_d2246e25357">
+          <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+          <SignaturePurpose tc="1000800011">ILLUSTRATION</SignaturePurpose>
+        </SignatureInfo>
+      </FormInstance>
+      <FormInstance id="Form_AGSTMT">
+        <FormName>AGSTMT</FormName>
+        <ProviderFormNumber>107.100 ICC</ProviderFormNumber>
+        <OriginalInputMode tc="1">Input Electronically</OriginalInputMode>
+        <DocumentControlNumber>AGSTMT</DocumentControlNumber>
+        <SignatureInfo SignaturePartyID="Party_d2246e25357">
+          <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+        </SignatureInfo>
+      </FormInstance>
+      <FormInstance id="Form_REPLCMNT">
+        <FormName>REPLCMNT</FormName>
+        <ProviderFormNumber>22190.100</ProviderFormNumber>
+        <OriginalInputMode tc="1">Input Electronically</OriginalInputMode>
+        <DocumentControlNumber>REPLCMNT</DocumentControlNumber>
+        <SignatureInfo SignaturePartyID="Party_d2246e13146">
+          <SignatureRoleCode tc="22">Applicant</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+        </SignatureInfo>
+        <SignatureInfo SignaturePartyID="Party_d2246e25357">
+          <SignatureRoleCode tc="15">Primary Agent</SignatureRoleCode>
+          <SignatureDate>2025-01-21</SignatureDate>
+          <SignaturePurpose tc="1000800011">Illustration Certificiation</SignaturePurpose>
+        </SignatureInfo>
+      </FormInstance>
+      <Party id="Party_d2246e13146">
+        <PartyTypeCode tc="1">Person</PartyTypeCode>
+        <PartyKey>351454429</PartyKey>
+        <FullName>Herbert StokesTW</FullName>
+        <GovtID>234-56-1251</GovtID>
+        <GovtIDTC tc="1">Social Security Number</GovtIDTC>
+        <ResidenceState tc="21">KY</ResidenceState>
+        <Person id="Person_2">
+          <FirstName>Herbert</FirstName>
+          <LastName>StokesTW</LastName>
+          <MarStat tc="2">Single</MarStat>
+          <Gender tc="1">Male</Gender>
+          <BirthDate>1980-03-23</BirthDate>
+          <Age>45</Age>
+          <Citizenship tc="1">USA</Citizenship>
+          <Height2>
+            <MeasureUnits tc="3">Alternate US format</MeasureUnits>
+            <MeasureValue>6.01</MeasureValue>
+          </Height2>
+          <Weight2>
+            <MeasureUnits tc="2">US System Standard</MeasureUnits>
+            <MeasureValue>175</MeasureValue>
+          </Weight2>
+          <NoDriversLicenseInd tc="1">yes</NoDriversLicenseInd>
+          <NoDriversLicenseReason>test</NoDriversLicenseReason>
+          <BirthCountry tc="1">USA</BirthCountry>
+          <BirthJurisdictionTC tc="21">KY</BirthJurisdictionTC>
+          <OLifEExtension VendorCode="008">
+            <PersonExtension>
+              <NonResOrUSCitizenInd tc="1">True</NonResOrUSCitizenInd>
+              <KnownNoDriversLicenseReason tc="2147483647">Other</KnownNoDriversLicenseReason>
+            </PersonExtension>
+          </OLifEExtension>
+        </Person>
+        <Phone>
+          <PhoneTypeCode tc="12">Cell</PhoneTypeCode>
+          <AreaCode>293</AreaCode>
+          <DialNumber>849-2834</DialNumber>
+          <PrefPhone tc="1">true</PrefPhone>
+        </Phone>
+        <Attachment>
+          <Description>NB38</Description>
+          <ArchiveRefNumber>37E01648AAB74494BD96ACF7843A670D</ArchiveRefNumber>
+          <FileName>UIL</FileName>
+          <Sequence>98176</Sequence>
+        </Attachment>
+        <Attachment>
+          <Description>NB38</Description>
+          <ArchiveRefNumber>050C2F5A699E4EB28114EB3B99901F2F</ArchiveRefNumber>
+          <FileName>UIL</FileName>
+          <Sequence>98526</Sequence>
+        </Attachment>
+        <Client>
+          <PrefLanguage tc="9">English</PrefLanguage>
+        </Client>
+        <EMailAddress>
+          <AddrLine>luissanchez_lopez@newyorklife.com</AddrLine>
+        </EMailAddress>
+        <Risk>
+          <ExistingInsuranceInd tc="0">no</ExistingInsuranceInd>
+          <TobaccoInd tc="0">no</TobaccoInd>
+          <FundingDisclosureInd tc="0">no</FundingDisclosureInd>
+          <MedicalExam>
+            <SmokerStat tc="1">OLI_TOBACCO_NEVER</SmokerStat>
+          </MedicalExam>
+          <OLifEExtension VendorCode="008">
+            <RiskExtension>
+              <RiskAmounts>
+                <RiskAmount name="TotalInforceAndAppliedInsRisk">5000000</RiskAmount>
+              </RiskAmounts>
+              <OtherCoverageInd tc="0">no</OtherCoverageInd>
+              <TerminateExistPolicyInd tc="0">no</TerminateExistPolicyInd>
+            </RiskExtension>
+          </OLifEExtension>
+        </Risk>
+        <Employment>
+          <EmploymentStatusTC tc="2">UNEMPLOYD</EmploymentStatusTC>
+          <Occupation>UNEMPLOYD</Occupation>
+          <WorkLocation>
+            <WorkJurisdiction tc="21">KY</WorkJurisdiction>
+          </WorkLocation>
+        </Employment>
+        <OLifEExtension VendorCode="008">
+          <HomeOwnerInd tc="0">False</HomeOwnerInd>
+          <NonResOrUSCitizenInd tc="0">False</NonResOrUSCitizenInd>
+          <PartyExtension>
+            <AlipClientID>397212</AlipClientID>
+            <ExamLocation>400 East Main Street, Frankfort, KY USA 40601</ExamLocation>
+            <BestTimeToCall>Morning</BestTimeToCall>
+            <TimeZone tc="1">Eastern Standard Time</TimeZone>
+            <UILReqdInd tc="1">yes</UILReqdInd>
+          </PartyExtension>
+        </OLifEExtension>
+        <Address>
+          <AddressTypeCode tc="125">Legal</AddressTypeCode>
+          <Line1>400 East Main Street</Line1>
+          <City>Frankfort</City>
+          <AddressStateTC tc="21">KY</AddressStateTC>
+          <Zip>40601</Zip>
+          <AddressCountryTC tc="1">USA</AddressCountryTC>
+        </Address>
+      </Party>
+      <Party id="Party_Banking_Holding_Banking">
+        <FullName>Herbert Stokes</FullName>
+      </Party>
+      <Party id="Party_Illustration">
+        <PartyTypeCode tc="1">Person</PartyTypeCode>
+      </Party>
+      <Party id="Party_d2246e25034">
+        <PartyTypeCode tc="1">Person</PartyTypeCode>
+        <FullName>Bro Bene</FullName>
+        <Person id="Person_4">
+          <FirstName>Bro</FirstName>
+          <LastName>Bene</LastName>
+        </Person>
+        <Address>
+          <AddressTypeCode tc="1">Home</AddressTypeCode>
+          <AddressCountryTC tc="1">USA</AddressCountryTC>
+          <OLifEExtension VendorCode="008">
+            <AddressExtension>
+              <SameAsPIInd tc="0">no</SameAsPIInd>
+            </AddressExtension>
+          </OLifEExtension>
+        </Address>
+        <OLifEExtension VendorCode="008">
+          <HomeOwnerInd tc="0">False</HomeOwnerInd>
+          <PartyExtension>
+            <AlipClientID>397213</AlipClientID>
+          </PartyExtension>
+        </OLifEExtension>
+      </Party>
+      <Party id="Party_d2246e25357">
+        <PartyKey>040820</PartyKey>
+        <FullName>WESLEY YOUNG</FullName>
+        <Person id="Person_5">
+          <FirstName>WESLEY</FirstName>
+          <MiddleName>RAY</MiddleName>
+          <LastName>YOUNG</LastName>
+        </Person>
+        <Address>
+          <AddressTypeCode tc="1">Home</AddressTypeCode>
+          <AddressCountryTC tc="1">USA</AddressCountryTC>
+        </Address>
+        <Client>
+          <OLifEExtension VendorCode="008">
+            <ClientExtension>
+              <AgentKnownPIStatusTC tc="1">Approached by Primary Insured</AgentKnownPIStatusTC>
+              <AARPCoBrandSaleInd tc="0">False</AARPCoBrandSaleInd>
+            </ClientExtension>
+          </OLifEExtension>
+        </Client>
+        <Producer>
+          <CarrierAppointment>
+            <CompanyProducerID>040820</CompanyProducerID>
+            <CarrierName>YOUNG,WESLEY RAY</CarrierName>
+            <Class>AGENT</Class>
+            <CarrierApptStatusDate>2003-02-03</CarrierApptStatusDate>
+            <CarrierApptStatusReason>ACTIVELY SELLING</CarrierApptStatusReason>
+          </CarrierAppointment>
+          <ProducerAgreement>
+            <ProducerType tc="9">Registered Representative</ProducerType>
+          </ProducerAgreement>
+          <OLifEExtension VendorCode="008">
+            <ProducerExtension>
+              <SelectAgentCode>S</SelectAgentCode>
+              <FTSupportCode tc="0">False</FTSupportCode>
+              <EnhancedUWInd tc="0">False</EnhancedUWInd>
+              <A2OInd tc="0">False</A2OInd>
+              <ContractCode>TE-06</ContractCode>
+              <ContractExtCode>N8</ContractExtCode>
+              <BlockListInd tc="0">False</BlockListInd>
+              <ADBInd tc="0">False</ADBInd>
+              <PlatinumInd tc="0">False</PlatinumInd>
+              <NYLARCInd tc="1">True</NYLARCInd>
+            </ProducerExtension>
+          </OLifEExtension>
+        </Producer>
+        <EMailAddress>
+          <AddrLine>ALIP_Agent_QA@newyorklife.com</AddrLine>
+        </EMailAddress>
+        <Employment>
+          <Department>
+            <DepartmentCode>D01</DepartmentCode>
+          </Department>
+        </Employment>
+        <DeliveryInfo>
+          <DocumentCategory tc="1000800001">Alerts</DocumentCategory>
+          <DeliveryLevel tc="1">Notify</DeliveryLevel>
+        </DeliveryInfo>
+        <OLifEExtension VendorCode="008">
+          <HomeOwnerInd tc="0">False</HomeOwnerInd>
+          <PartyExtension>
+            <AlipClientID>388380</AlipClientID>
+          </PartyExtension>
+        </OLifEExtension>
+      </Party>
+      <Relation OriginatingObjectID="Holding_Primary" RelatedObjectID="Holding_Illus" id="Relation_Holding_Illus">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="4">Holding</RelatedObjectType>
+        <RelationRoleCode tc="1000800317">Illustration</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_Form_PART1" OriginatingObjectID="Holding_Primary" RelatedObjectID="Form_PART1">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="101">FormInstance</RelatedObjectType>
+        <RelationRoleCode tc="107">FORMFOR</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_Form_AGSTMT" OriginatingObjectID="Holding_Primary" RelatedObjectID="Form_AGSTMT">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="101">FormInstance</RelatedObjectType>
+        <RelationRoleCode tc="107">FORMFOR</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_Form_REPLCMNT" OriginatingObjectID="Holding_Primary" RelatedObjectID="Form_REPLCMNT">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="101">FormInstance</RelatedObjectType>
+        <RelationRoleCode tc="107">FORMFOR</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_2" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e13146">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="32">Primary</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_PrimaryBeneficiary_4" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e25034">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="34">Primary Beneficiary</RelationRoleCode>
+        <InterestPercent>100.0</InterestPercent>
+        <DistributionOption tc="2">Percentage</DistributionOption>
+      </Relation>
+      <Relation OriginatingObjectID="Party_d2246e13146" RelatedObjectID="Party_d2246e25034" id="Relation_4_4">
+        <OriginatingObjectType tc="6">Party</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationDescription tc="7">Brother</RelationDescription>
+      </Relation>
+      <Relation id="Relation_5" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e25357">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="37">Agent</RelationRoleCode>
+        <InterestPercent>100.0</InterestPercent>
+        <AdvancingElectedInd tc="0">no</AdvancingElectedInd>
+      </Relation>
+      <Relation id="Relation_Applicant_1" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e13146">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="96">Applicant</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_Payer_1" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e13146">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="31">Payer</RelationRoleCode>
+      </Relation>
+      <Relation id="Relation_Owner_1" OriginatingObjectID="Holding_Primary" RelatedObjectID="Party_d2246e13146">
+        <OriginatingObjectType tc="4">Holding</OriginatingObjectType>
+        <RelatedObjectType tc="6">Party</RelatedObjectType>
+        <RelationRoleCode tc="8">Owner</RelationRoleCode>
+      </Relation>
+    </OLifE>
+  </TXLifeRequest>
+</TXLife></Input><Input-Detail></Input-Detail><Entity></Entity></XMLWrapper>
