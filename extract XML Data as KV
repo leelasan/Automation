@@ -1,0 +1,75 @@
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+public class XMLKeyValueParser {
+
+    public static void main(String[] args) {
+        try {
+            File xmlFile = new File("01001008.xml"); // Replace with your XML file path
+            Map<String, String> keyValueMap = parseXML(xmlFile);
+
+            // Example: Retrieve a value using a key
+            String policyNumber = keyValueMap.get("PolNumber");
+            System.out.println("Policy Number: " + policyNumber);
+
+            // Print all key-value pairs
+            keyValueMap.forEach((key, value) -> System.out.println(key + " = " + value));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Map<String, String> parseXML(File file) {
+        Map<String, String> keyValueMap = new HashMap<>();
+
+        try {
+            // Initialize XML parser
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true); // Handle namespaces
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(file);
+            document.getDocumentElement().normalize();
+
+            // Parse XML and store key-value pairs
+            extractElements(document.getDocumentElement(), keyValueMap, "");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return keyValueMap;
+    }
+
+    private static void extractElements(Node node, Map<String, String> keyValueMap, String parentKey) {
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+            Element element = (Element) node;
+            String key = parentKey.isEmpty() ? element.getTagName() : parentKey + "." + element.getTagName();
+            
+            if (element.hasChildNodes()) {
+                NodeList children = element.getChildNodes();
+                boolean hasText = false;
+
+                for (int i = 0; i < children.getLength(); i++) {
+                    Node child = children.item(i);
+                    if (child.getNodeType() == Node.TEXT_NODE && child.getNodeValue().trim().length() > 0) {
+                        hasText = true;
+                        keyValueMap.put(key, child.getNodeValue().trim());
+                    } else if (child.getNodeType() == Node.ELEMENT_NODE) {
+                        extractElements(child, keyValueMap, key);
+                    }
+                }
+
+                // If no text but has attributes, store attributes separately
+                if (!hasText && element.hasAttributes()) {
+                    NamedNodeMap attributes = element.getAttributes();
+                    for (int j = 0; j < attributes.getLength(); j++) {
+                        Node attr = attributes.item(j);
+                        keyValueMap.put(key + "@" + attr.getNodeName(), attr.getNodeValue());
+                    }
+                }
+            }
+        }
+    }
+}
