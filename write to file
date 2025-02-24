@@ -1,0 +1,33 @@
+import org.testng.annotations.Test;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class WriteXMLTest {
+
+    @Test
+    public void createXMLFile() {
+        // Your XML string
+        String xmlContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                            "<note>\n" +
+                            "    <to>Tove</to>\n" +
+                            "    <from>Jani</from>\n" +
+                            "    <heading>Reminder</heading>\n" +
+                            "    <body>Don't forget me this weekend!</body>\n" +
+                            "</note>";
+
+        // Get the project directory (root of your project)
+        String projectPath = System.getProperty("user.dir");
+
+        // Define the file path (in this example, the file will be saved in the project root)
+        File file = new File(projectPath + File.separator + "note.xml");
+
+        // Write the XML string to the file
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(xmlContent);
+            System.out.println("XML file created at: " + file.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
